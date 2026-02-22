@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regal Ontology v2 — Reviewed</title>
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --surface: #16213e;
+            --text: #eee;
+            --accent: #0f3460;
+            --red: #e94560;
+            --green: #4ecca3;
+            --yellow: #ffc107;
+            --blue: #00d9ff;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 { color: var(--blue); margin-bottom: 0.5rem; font-size: 2rem; }
+        h2 { color: var(--green); margin: 2rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--accent); }
+        h3 { color: var(--text); margin: 1.5rem 0 0.75rem; }
+        .meta { color: #888; margin-bottom: 2rem; font-size: 0.9rem; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+        th, td { padding: 0.5rem; text-align: left; border: 1px solid var(--accent); }
+        th { background: var(--accent); color: var(--blue); }
+        tr:nth-child(even) { background: rgba(255,255,255,0.03); }
+        ul, ol { margin: 1rem 0 1rem 1.5rem; }
+        li { margin: 0.3rem 0; }
+        code { background: var(--accent); padding: 0.2rem 0.4rem; border-radius: 3px; font-size: 0.85rem; }
+        .review-note {
+            background: rgba(233, 69, 96, 0.15);
+            border-left: 4px solid var(--red);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .review-note strong { color: var(--red); }
+        .flag { color: var(--yellow); font-weight: bold; }
+        .security-warning { background: rgba(255, 193, 7, 0.2); border-left-color: var(--yellow); }
+        .summary-table th { background: var(--red); }
+        .priority-high { color: var(--red); font-weight: bold; }
+        .priority-medium { color: var(--yellow); }
+        .priority-low { color: var(--green); }
+        hr { border: none; border-top: 1px solid var(--accent); margin: 2rem 0; }
+    </style>
+</head>
+<body>
+    <h1>Regal Ontology v2</h1>
+    <div class="meta">
+        <strong>Version:</strong> 2.0 | 
+        <strong>Reviewed:</strong> 2026-02-22 | 
+        <strong>Sources:</strong> Regal Ontology v1, AWS Architecture Inventory v2/v2.1, ontology-map.aws.yaml
+    </div>
+
+    <h2>1) Purpose</h2>
+    <p>The Regal Ontology defines the canonical model of Regal's business domain (clients, partners, services, workflows, and systems) in a way that can be:</p>
+    <ul>
+        <li><strong>queried</strong> — what is true right now?</li>
+        <li><strong>explained</strong> — why did this happen?</li>
+        <li><strong>acted on</strong> — what should we do next?</li>
+        <li><strong>automated safely</strong> — what systems can mutate what records?</li>
+    </ul>
+
+    <h3>1.1 Core Systems</h3>
+    <p>The ontology serves as the shared language across:</p>
+    <ul>
+        <li><strong>Client Dashboard + Product Hub + B2C apps</strong> — front-end experiences</li>
+        <li><strong>Core APIs (RCM Serverless)</strong> — business logic layer</li>
+        <li><strong>Gobodo API</strong> — custom dynamic data modeling engine powering Product Hub</li>
+        <li><strong>Salesforce</strong> — legacy/transitional source-of-truth</li>
+        <li><strong>RDS/DynamoDB</strong> — target architecture data stores</li>
+        <li><strong>Vendors</strong> — Array, CyberSweep, Vouched integrations</li>
+        <li><strong>Keycloak</strong> — identity + permissions (scopes as capabilities)</li>
+    </ul>
+
+    <h3>1.2 Data Residency Requirements</h3>
+    <table>
+        <tr><th>Region</th><th>Jurisdiction</th><th>Data Residency</th><th>Notes</th></tr>
+        <tr><td>🇺🇸 United States</td><td>US regulations</td><td>us-east-1, us-east-2</td><td>Current production</td></tr>
+        <tr><td>🇬🇧 United Kingdom</td><td>FCA regulated</td><td>eu-west-2 (London)</td><td>Target: June 2026</td></tr>
+    </table>
+    <p><em>All operations must respect data residency boundaries. Client data from UK operations must remain in UK-resident infrastructure. Cross-region data flows require explicit compliance review.</em></p>
+
+    <h3>1.3 Success Criteria</h3>
+    <p>The ontology is effective when:</p>
+    <ul>
+        <li>✅ Agents can answer 90%+ of domain questions without human escalation</li>
+        <li>✅ New team members understand system boundaries within 1 day</li>
+        <li>✅ API consumers can self-serve integration without tribal knowledge</li>
+        <li>✅ Cross-team discussions use consistent terminology</li>
+        <li>✅ System changes can be traced to ontology updates</li>
+    </ul>
+
+    <h3>1.4 Version Governance</h3>
+    <table>
+        <tr><th>Aspect</th><th>Policy</th></tr>
+        <tr><td><strong>Owner</strong></td><td>Product Engineering (Magnus / Thomas)</td></tr>
+        <tr><td><strong>Change Process</strong></td><td>PR to ontology repo → Review by owner → Merge → Announce in #engineering</td></tr>
+        <tr><td><strong>Breaking Changes</strong></td><td>Require 2-week notice + migration guide</td></tr>
+        <tr><td><strong>Version Format</strong></td><td>MAJOR.MINOR (e.g., 2.1) — major = breaking, minor = additive</td></tr>
+    </table>
+
+    <h2>2) Domain Boundaries (Bounded Contexts)</h2>
+    <p>Units of ownership that map cleanly to repos, AWS stacks, and team responsibility. Each context has clear boundaries and communicates with others through defined interfaces.</p>
+
+    <table>
+        <tr>
+            <th>#</th>
+            <th>Context</th>
+            <th>Scope</th>
+            <th>Primary Repo</th>
+            <th>Owner</th>
+        </tr>
+        <tr>
+            <td>1</td>
+            <td><strong>Identity & Access</strong></td>
+            <td>Keycloak users, scopes, verification state, SSO</td>
+            <td><code>keycloak-v26</code></td>
+            <td>Platform</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td><strong>Client & Partner Management</strong></td>
+            <td>Clients, partner accounts, contacts, visibility links</td>
+            <td><code>rcm-serverless</code></td>
+            <td>Product Eng</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td><strong>Enrollment & Service Lifecycle</strong></td>
+            <td>Enrollment, eligibility, consent, service state</td>
+            <td><code>rcm-serverless</code></td>
+            <td>Product Eng</td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td><strong>CreditBlock Operations</strong></td>
+            <td>Bureau workflows, freeze/unfreeze, status tracking</td>
+            <td><code>cb-submodule</code></td>
+            <td>Product Eng</td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td><strong>Monitoring / Array</strong></td>
+            <td>Array users, credit monitoring enrollments, reports, webhooks</td>
+            <td><code>vendor-submodule</code></td>
+            <td>Product Eng</td>
+        </tr>
+        <tr>
+            <td>6</td>
+            <td><strong>CyberSweep / Exposure</strong></td>
+            <td>Identity protection monitors, dark web results, automation</td>
+            <td><code>cs-submodule</code></td>
+            <td>Product Eng</td>
+        </tr>
+        <tr>
+            <td>7</td>
+            <td><strong>Support & Comms</strong></td>
+            <td>Cases, tasks, notifications, email automation</td>
+            <td><code>rcm-serverless</code></td>
+            <td>Product Eng</td>
+        </tr>
+        <tr>
+            <td>8</td>
+            <td><strong>Data Sync & Projections</strong></td>
+            <td>Salesforce→RDS sync, read models, dashboards</td>
+            <td><code>salesforce-data-sync</code></td>
+            <td>Platform</td>
+        </tr>
+        <tr>
+            <td>9</td>
+            <td><strong>Dynamic Data Modeling (Gobodo)</strong></td>
+            <td>Custom objects, page layouts, field definitions for Product Hub</td>
+            <td><code>gobodo-infrastructure</code></td>
+            <td>Product Eng</td>
+        </tr>
+    </table>
+
+    <h3>2.1 Context Dependencies</h3>
+    <p>How contexts communicate (arrows show data/event flow):</p>
+    <pre style="background: var(--accent); padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.85rem;">
+┌─────────────────┐      ┌──────────────────────┐      ┌─────────────────┐
+│  Identity &     │─────▶│  Client & Partner    │─────▶│  Enrollment &   │
+│  Access         │      │  Management          │      │  Lifecycle      │
+└─────────────────┘      └──────────────────────┘      └─────────────────┘
+        │                         │                           │
+        │                         ▼                           ▼
+        │                ┌──────────────────────┐      ┌─────────────────┐
+        │                │  Support & Comms     │      │  CreditBlock    │
+        │                └──────────────────────┘      │  Operations     │
+        │                         │                    └─────────────────┘
+        │                         │                           │
+        ▼                         ▼                           ▼
+┌─────────────────┐      ┌──────────────────────┐      ┌─────────────────┐
+│  Data Sync &    │◀─────│  Monitoring / Array  │◀─────│  CyberSweep     │
+│  Projections    │      └──────────────────────┘      └─────────────────┘
+└─────────────────┘
+        │
+        ▼
+┌─────────────────┐
+│  Gobodo         │ ◀── Product Hub reads/writes custom objects
+│  (Dynamic Data) │
+└─────────────────┘
+    </pre>
+
+    <h3>2.2 UK Expansion Considerations</h3>
+    <p>For UK data residency, each context must:</p>
+    <ul>
+        <li>Deploy to <code>eu-west-2</code> (London) region</li>
+        <li>Ensure no cross-region PII transfer without explicit consent</li>
+        <li>Maintain separate Keycloak realm for UK users</li>
+        <li>Use UK-resident vendor endpoints where available (Array UK, etc.)</li>
+    </ul>
+    <p><em>No new bounded contexts required for UK — same contexts, regional deployment.</em></p>
+
+    <h2>3) System Landscape</h2>
+    <p>Where truth lives and where actions occur. Systems are organized by function and include both US (current) and UK (planned) deployments.</p>
+    
+    <h3>3.1 Identity & Authorization</h3>
+    <table>
+        <tr><th>System</th><th>US Infrastructure</th><th>UK Infrastructure</th><th>URLs</th></tr>
+        <tr>
+            <td><strong>Keycloak</strong><br><small>Identity provider, SSO, user management</small></td>
+            <td><code>keycloak-development</code> (dev)<br><code>keycloak-v16-release</code> (prod)<br>Aurora MySQL</td>
+            <td><em>TBD — eu-west-2</em></td>
+            <td>sso.dev.regalcredit.com<br>sso.stg.regalcredit.com<br><strong>sso.regalcredit.com</strong></td>
+        </tr>
+        <tr>
+            <td><strong>Keycloak Authorizer</strong><br><small>Lambda authorizer for API Gateway</small></td>
+            <td><code>core-cdk-lambda-keycloak-authorizer-*</code></td>
+            <td><em>TBD</em></td>
+            <td>N/A (internal)</td>
+        </tr>
+    </table>
+
+    <h3>3.2 Core Data Systems</h3>
+    <table>
+        <tr><th>System</th><th>Role</th><th>US Infrastructure</th><th>UK Infrastructure</th></tr>
+        <tr>
+            <td><strong>Salesforce</strong></td>
+            <td>Legacy SoR — Person Accounts, Contacts, Partner Accounts, Cases, picklists</td>
+            <td>External (Salesforce Cloud)</td>
+            <td>Same instance (consider data residency)</td>
+        </tr>
+        <tr>
+            <td><strong>RDS (sfdatasync)</strong></td>
+            <td>Target SoR — synced from Salesforce, source for projections</td>
+            <td><code>rcm-dsync-data-main-rds-stg</code><br>Account: 865942198740<br>Region: us-east-1</td>
+            <td><em>TBD — eu-west-2</em></td>
+        </tr>
+        <tr>
+            <td><strong>DynamoDB</strong></td>
+            <td>Read-optimized projections, fast dashboard queries</td>
+            <td><em>Not yet deployed</em></td>
+            <td><em>TBD</em></td>
+        </tr>
+    </table>
+
+    <h3>3.3 Gobodo (Dynamic Data Platform)</h3>
+    <p><strong>Gobodo</strong> is Regal's custom dynamic data modeling platform that powers Product Hub. It enables:</p>
+    <ul>
+        <li>Custom object definitions (like Salesforce custom objects)</li>
+        <li>Dynamic page layouts and field configurations</li>
+        <li>Role-based field visibility and permissions</li>
+        <li>Schema evolution without code deployments</li>
+    </ul>
+    <table>
+        <tr><th>Component</th><th>US Infrastructure</th><th>UK Infrastructure</th><th>Notes</th></tr>
+        <tr>
+            <td><strong>Gobodo API</strong></td>
+            <td><code>gobodo-*</code> Lambdas</td>
+            <td><em>TBD</em></td>
+            <td>REST API for CRUD on custom objects</td>
+        </tr>
+        <tr>
+            <td><strong>Gobodo Database</strong></td>
+            <td><code>rcm-gobodo-db-stg</code> (Postgres)</td>
+            <td><em>TBD</em></td>
+            <td>Stores custom object data + metadata</td>
+        </tr>
+        <tr>
+            <td><strong>Gobodo Cache</strong></td>
+            <td><code>gobodo-cache-*</code> (ElastiCache)</td>
+            <td><em>TBD</em></td>
+            <td>Schema caching for performance</td>
+        </tr>
+    </table>
+    <div class="review-note security-warning">
+        <strong>🟡 SECURITY ACTION REQUIRED:</strong> Gobodo DB is currently publicly accessible (Security Group allows 0.0.0.0/0 on port 5432). 
+        <br><br>
+        <strong>Remediation:</strong>
+        <ul style="margin-top: 0.5rem;">
+            <li>Restrict SG to VPC CIDR only</li>
+            <li>Add VPN/bastion for dev access</li>
+            <li>Enable SSL enforcement</li>
+            <li><strong>Owner:</strong> Platform team | <strong>Target:</strong> Before UK launch</li>
+        </ul>
+    </div>
+
+    <h3>3.4 Vendor Systems</h3>
+    <table>
+        <tr><th>Vendor</th><th>Purpose</th><th>Lambdas</th><th>Credentials</th><th>UK Support</th></tr>
+        <tr>
+            <td><strong>Array</strong></td>
+            <td>Credit reports, monitoring, scores</td>
+            <td><code>core-cdk-lambda-array-*</code><br><code>vendor-array-cdk-*</code></td>
+            <td>ParameterStore:<br><code>/cybersweep-serverless/array/*</code></td>
+            <td>TBD — check UK bureau support</td>
+        </tr>
+        <tr>
+            <td><strong>CyberSweep</strong></td>
+            <td>Identity protection, dark web monitoring</td>
+            <td><code>cybersweep-cdk-lambda-*</code></td>
+            <td>ParameterStore:<br><code>/cybersweep-serverless/*</code></td>
+            <td>TBD</td>
+        </tr>
+        <tr>
+            <td><strong>Vouched</strong></td>
+            <td>Identity verification (KYC)</td>
+            <td><code>core-cdk-lambda-vouched-*</code></td>
+            <td>SecretsManager</td>
+            <td>TBD — may need UK KYC provider</td>
+        </tr>
+    </table>
+
+    <h3>3.5 Front Ends</h3>
+    <table>
+        <tr><th>App</th><th>Dev</th><th>Staging</th><th>Production</th><th>Infrastructure</th><th>Status</th></tr>
+        <tr>
+            <td><strong>Client Dashboard</strong><br><small>Partner-facing portal</small></td>
+            <td>partner.dev.regalcredit.com</td>
+            <td>partner.stg.regalcredit.com</td>
+            <td><strong>partner.regalcredit.com</strong></td>
+            <td>AWS Amplify</td>
+            <td>✅ Live</td>
+        </tr>
+        <tr>
+            <td><strong>Product Hub</strong><br><small>Internal ops + Gobodo UI</small></td>
+            <td>producthub.dev.regalcredit.com</td>
+            <td>producthub.stg.regalcredit.com</td>
+            <td><em>Not yet deployed</em></td>
+            <td>AWS Amplify</td>
+            <td>🚧 Dev/Staging live</td>
+        </tr>
+        <tr>
+            <td><strong>Enrollment Pages</strong><br><small>Client signup flows</small></td>
+            <td colspan="3"><em>Hosted separately (not Amplify)</em></td>
+            <td>CloudFront + S3 / Other</td>
+            <td>✅ Live</td>
+        </tr>
+        <tr>
+            <td><strong>B2C Mobile Apps</strong><br><small>Consumer-facing iOS</small></td>
+            <td colspan="3">App Store (TestFlight for dev/staging)</td>
+            <td>iOS native</td>
+            <td>✅ Live</td>
+        </tr>
+    </table>
+
+    <h3>3.6 CI/CD & Deployment Pipelines</h3>
+    <table>
+        <tr><th>App / Service</th><th>Pipeline</th><th>Repo</th><th>Trigger</th></tr>
+        <tr>
+            <td><strong>Client Dashboard</strong></td>
+            <td>AWS Amplify</td>
+            <td><code>client-dashboard</code></td>
+            <td>Push to main/dev/staging branches</td>
+        </tr>
+        <tr>
+            <td><strong>Product Hub</strong></td>
+            <td>AWS Amplify</td>
+            <td><code>product-hub</code></td>
+            <td>Push to main/dev/staging branches</td>
+        </tr>
+        <tr>
+            <td><strong>RCM Serverless (APIs)</strong></td>
+            <td>AWS CDK Pipelines</td>
+            <td><code>rcm-serverless</code></td>
+            <td>Push to main → auto-deploy dev → manual promote</td>
+        </tr>
+        <tr>
+            <td><strong>Keycloak</strong></td>
+            <td>CDK / Manual</td>
+            <td><code>keycloak-v26</code></td>
+            <td>Manual deployment</td>
+        </tr>
+        <tr>
+            <td><strong>Gobodo</strong></td>
+            <td>CDK Pipelines</td>
+            <td><code>gobodo-infrastructure</code></td>
+            <td>Push to main</td>
+        </tr>
+        <tr>
+            <td><strong>Salesforce Data Sync</strong></td>
+            <td>CDK Pipelines</td>
+            <td><code>salesforce-data-sync</code></td>
+            <td>Push to main</td>
+        </tr>
+    </table>
+    <p><em>Amplify apps auto-deploy on branch push. CDK Pipelines use CodePipeline with dev → staging → prod promotion.</em></p>
+
+    <h2>4) API Surface</h2>
+    <p>All APIs are served via AWS API Gateway with Keycloak JWT authorization. Each route requires specific scopes (capabilities) for access.</p>
+    
+    <h3>4.1 API Gateways</h3>
+    <table>
+        <tr><th>Domain</th><th>Stage</th><th>API ID</th><th>Region</th><th>Notes</th></tr>
+        <tr><td>api.dev.regalcredit.com</td><td>development</td><td>yqo32wi8cd</td><td>us-east-1</td><td>Dev testing</td></tr>
+        <tr><td>api.stg.regalcredit.com</td><td>staging</td><td>fl1928grye</td><td>us-east-1</td><td>Pre-prod validation</td></tr>
+        <tr><td><strong>api.regalcredit.com</strong></td><td>production</td><td>gy0zwkmroe</td><td>us-east-1</td><td>Live traffic</td></tr>
+        <tr><td><strong>webhook.regalcredit.com</strong></td><td>production</td><td>ndcltu5vvd</td><td>us-east-1</td><td>Vendor callbacks</td></tr>
+        <tr><td><em>api.uk.regalcredit.com</em></td><td><em>planned</em></td><td><em>TBD</em></td><td>eu-west-2</td><td>UK API (June 2026)</td></tr>
+    </table>
+
+    <h3>4.2 Authentication & Authorization</h3>
+    <table>
+        <tr><th>Auth Type</th><th>Method</th><th>Use Case</th></tr>
+        <tr>
+            <td><strong>Keycloak JWT</strong></td>
+            <td><code>Authorization: Bearer &lt;token&gt;</code></td>
+            <td>All authenticated endpoints (dashboards, apps)</td>
+        </tr>
+        <tr>
+            <td><strong>API Key</strong></td>
+            <td><code>x-api-key: &lt;key&gt;</code></td>
+            <td>Webhook endpoints, vendor callbacks</td>
+        </tr>
+        <tr>
+            <td><strong>Service Account</strong></td>
+            <td>Keycloak client credentials flow</td>
+            <td>Backend-to-backend, automation, agents</td>
+        </tr>
+    </table>
+
+    <h3>4.3 Route Catalog</h3>
+    
+    <h4>Core APIs (<code>/core/v1/*</code>)</h4>
+    <table>
+        <tr><th>Route</th><th>Method</th><th>Lambda</th><th>Scopes Required</th><th>Description</th></tr>
+        <tr>
+            <td><code>/core/v1/partner/contacts</code></td>
+            <td>GET, POST</td>
+            <td>core-cdk-lambda-contact-*</td>
+            <td><code>partner:read</code>, <code>partner:write</code></td>
+            <td>Partner contact management</td>
+        </tr>
+        <tr>
+            <td><code>/core/v1/client/{id}</code></td>
+            <td>GET, PATCH</td>
+            <td>core-cdk-lambda-client-*</td>
+            <td><code>client:read</code>, <code>client:write</code></td>
+            <td>Client profile operations</td>
+        </tr>
+        <tr>
+            <td><code>/core/v1/client/{id}/family</code></td>
+            <td>GET, POST</td>
+            <td>core-cdk-lambda-client-*</td>
+            <td><code>client:read</code>, <code>client:write</code></td>
+            <td>Family member management</td>
+        </tr>
+        <tr>
+            <td><code>/core/v1/client/{id}/notifications</code></td>
+            <td>GET, POST</td>
+            <td>core-cdk-lambda-notification-*</td>
+            <td><code>notification:read</code>, <code>notification:write</code></td>
+            <td>Client notifications</td>
+        </tr>
+        <tr>
+            <td><code>/core/v1/array/*</code></td>
+            <td>Various</td>
+            <td>core-cdk-lambda-array-*</td>
+            <td><code>array:read</code>, <code>array:write</code></td>
+            <td>Array integration endpoints</td>
+        </tr>
+    </table>
+
+    <h4>CreditBlock APIs (<code>/creditblock/*</code>)</h4>
+    <table>
+        <tr><th>Route</th><th>Method</th><th>Lambda</th><th>Scopes Required</th><th>Description</th></tr>
+        <tr>
+            <td><code>/creditblock/v1/bureaus</code></td>
+            <td>GET</td>
+            <td>creditblock-cdk-lambda-bureau-*</td>
+            <td><code>creditblock:read</code></td>
+            <td>List bureau status</td>
+        </tr>
+        <tr>
+            <td><code>/creditblock/v1/bureaus/block</code></td>
+            <td>POST</td>
+            <td>creditblock-cdk-lambda-bureau-*</td>
+            <td><code>creditblock:write</code></td>
+            <td>Request credit freeze</td>
+        </tr>
+        <tr>
+            <td><code>/creditblock/v1/bureaus/unblock</code></td>
+            <td>POST</td>
+            <td>creditblock-cdk-lambda-bureau-*</td>
+            <td><code>creditblock:write</code></td>
+            <td>Request credit unfreeze</td>
+        </tr>
+    </table>
+
+    <h4>CyberSweep APIs (<code>/cybersweep/*</code>)</h4>
+    <table>
+        <tr><th>Route</th><th>Method</th><th>Lambda</th><th>Scopes Required</th><th>Description</th></tr>
+        <tr>
+            <td><code>/cybersweep/v1/idp/monitors</code></td>
+            <td>GET, POST</td>
+            <td>cybersweep-cdk-lambda-*</td>
+            <td><code>cybersweep:read</code>, <code>cybersweep:write</code></td>
+            <td>Identity protection monitors</td>
+        </tr>
+        <tr>
+            <td><code>/cybersweep/v1/idp/monitors/{id}</code></td>
+            <td>GET, DELETE</td>
+            <td>cybersweep-cdk-lambda-*</td>
+            <td><code>cybersweep:read</code>, <code>cybersweep:write</code></td>
+            <td>Monitor details/removal</td>
+        </tr>
+    </table>
+
+    <h4>Vendor APIs (<code>/vendor/*</code>)</h4>
+    <table>
+        <tr><th>Route</th><th>Method</th><th>Lambda</th><th>Scopes Required</th><th>Description</th></tr>
+        <tr>
+            <td><code>/vendor/array/v2/user</code></td>
+            <td>GET, POST</td>
+            <td>vendor-cdk-lambda-*</td>
+            <td><code>vendor:array</code></td>
+            <td>Array user management</td>
+        </tr>
+        <tr>
+            <td><code>/vendor/array/v2/report/*</code></td>
+            <td>GET</td>
+            <td>vendor-cdk-lambda-*</td>
+            <td><code>vendor:array</code></td>
+            <td>Credit reports</td>
+        </tr>
+    </table>
+
+    <h4>Webhook Endpoints (<code>webhook.regalcredit.com</code>)</h4>
+    <table>
+        <tr><th>Route</th><th>Source</th><th>Auth</th><th>Description</th></tr>
+        <tr>
+            <td><code>/webhooks/array/*</code></td>
+            <td>Array</td>
+            <td>API Key + IP allowlist</td>
+            <td>Credit monitoring alerts, report ready</td>
+        </tr>
+        <tr>
+            <td><code>/webhooks/cybersweep/*</code></td>
+            <td>CyberSweep</td>
+            <td>API Key + signature</td>
+            <td>Dark web alerts, breach notifications</td>
+        </tr>
+    </table>
+
+    <h3>4.4 Rate Limits & Quotas</h3>
+    <table>
+        <tr><th>Tier</th><th>Requests/sec</th><th>Burst</th><th>Applies To</th></tr>
+        <tr><td>Default</td><td>100</td><td>200</td><td>All authenticated requests</td></tr>
+        <tr><td>Partner Dashboard</td><td>50</td><td>100</td><td>Partner contact sessions</td></tr>
+        <tr><td>Service Account</td><td>500</td><td>1000</td><td>Backend automation</td></tr>
+        <tr><td>Webhook</td><td>1000</td><td>2000</td><td>Vendor callbacks</td></tr>
+    </table>
+
+    <h3>4.5 API Versioning</h3>
+    <ul>
+        <li><strong>URL versioning:</strong> <code>/core/v1/*</code>, <code>/creditblock/v1/*</code>, etc.</li>
+        <li><strong>Breaking changes:</strong> New major version (v2), old version supported for 6 months</li>
+        <li><strong>Deprecation:</strong> <code>Sunset</code> header + 90-day notice</li>
+        <li><strong>UK APIs:</strong> Same version scheme, regional deployment</li>
+    </ul>
+
+    <h2>5) Entity Model (Canonical)</h2>
+    
+    <h3>5.1 Identity & Access</h3>
+    <table>
+        <tr><th>Entity</th><th>Description</th></tr>
+        <tr><td>UserIdentity</td><td>Keycloak user; links to Client or PartnerContact</td></tr>
+        <tr><td>Device</td><td>deviceId, userId, deviceType, deviceToken</td></tr>
+    </table>
+
+    <h3>5.2 Customer & Relationships</h3>
+    <table>
+        <tr><th>Entity</th><th>Relationships</th></tr>
+        <tr><td>Client (Person Account)</td><td>→ FamilyMembers, Notifications, Enrollments, Cases</td></tr>
+        <tr><td>FamilyMember</td><td>Spouse | Dependent (for eligibility/pricing)</td></tr>
+        <tr><td>Partner (Partner Account)</td><td>→ Pricebook, PartnerContacts</td></tr>
+        <tr><td>PartnerContact</td><td>→ Clients via ClientVisibilityLink</td></tr>
+    </table>
+
+    <h3>5.3 Services & Operations</h3>
+    <table>
+        <tr><th>Entity</th><th>Notes</th></tr>
+        <tr><td>Service</td><td>CreditBlock | CreditMonitoring | CreditRepair | CyberSweep</td></tr>
+        <tr><td>Enrollment</td><td>Client ↔ Service binding</td></tr>
+        <tr><td>Notification</td><td>type, level, read receipt</td></tr>
+        <tr><td>SupportCase</td><td>/client/{clientId}/support</td></tr>
+        <tr><td>BureauCase</td><td>/creditblock/v1/bureaus/*</td></tr>
+    </table>
+
+    <h3>5.4 Vendor Entities</h3>
+    <table>
+        <tr><th>Entity</th><th>API Path</th></tr>
+        <tr><td>ArrayUser</td><td>/vendor/array/v2/user</td></tr>
+        <tr><td>CreditReport</td><td>/vendor/array/v2/report/*</td></tr>
+        <tr><td>CyberSweepMonitor</td><td>/cybersweep/v1/idp/monitors/*</td></tr>
+    </table>
+    <div class="review-note">
+        <strong>🔴 REVIEW:</strong> Cross-check against Salesforce/RDS schemas. IMPROVE: Add field-level definitions (types, constraints, required). Add FamilyMember attributes.
+    </div>
+
+    <h2>6) Projections & Read Models</h2>
+    <p><em>Target architecture for read-optimized views (DynamoDB, materialized views)</em></p>
+    <div class="review-note">
+        <strong>🔴 REVIEW:</strong> Section is sparse. Define specific read models for: Client Dashboard views, Partner aggregations, Reporting/analytics, Agent decision-making.
+    </div>
+
+    <h2>7) Commands vs Events</h2>
+    
+    <h3>7.1 Commands (write intents)</h3>
+    <p><em>TODO: Add this section</em></p>
+
+    <h3>7.2 Canonical Events</h3>
+    <table>
+        <tr><th>Category</th><th>Events</th></tr>
+        <tr><td>Identity</td><td>device_registered, device_token_updated</td></tr>
+        <tr><td>Client</td><td>client_profile_updated, family_member_updated</td></tr>
+        <tr><td>Partner</td><td>partner_contact_created, client_visibility_changed</td></tr>
+        <tr><td>CreditBlock</td><td>bureau_block_requested, block_process_completed</td></tr>
+        <tr><td>Array</td><td>array_user_created, report_pdf_ready</td></tr>
+        <tr><td>CyberSweep</td><td>monitor_added, monitor_deleted</td></tr>
+        <tr><td>Data Sync</td><td>rcm_dsync_sync_completed</td></tr>
+    </table>
+    <div class="review-note">
+        <strong>🔴 REVIEW:</strong> Verify event coverage is complete. IMPROVE: Add sequence diagrams for key flows. Add Commands section.
+    </div>
+
+    <h2>8) Policy & Safety Model</h2>
+    <p><strong>Capabilities:</strong> <code>salesforce:read</code> vs <code>salesforce:read-write</code>, <code>client-dashboard:read</code> vs <code>client-dashboard:read-write</code></p>
+    <p><strong>Verification-Required:</strong> bureau block/unblock, verification, vendor enrollments</p>
+    <p><strong>Agent Question:</strong> Can I do this autonomously, or draft + ask approval?</p>
+    <div class="review-note">
+        <strong>🔴 REVIEW:</strong> Expand capability matrix. Add agent autonomy levels (autonomous / human-in-loop / draft-only). Add escalation paths. Define audit requirements.
+    </div>
+
+    <h2>9) Implementation Bindings</h2>
+    <table>
+        <tr><th>Domain</th><th>Repos</th><th>AWS Stacks</th></tr>
+        <tr><td>Identity</td><td>keycloak-v26, keycloak-theme-*</td><td>keycloak-development, keycloak-v16-release</td></tr>
+        <tr><td>Client/Partner</td><td>rcm-serverless, client-dashboard-api-v2</td><td>rcm-pipeline-*-stack-*</td></tr>
+        <tr><td>CreditBlock</td><td>cb-submodule</td><td>rcm-pipeline-creditblock-*</td></tr>
+        <tr><td>CyberSweep</td><td>cs-submodule</td><td>rcm-pipeline-cybersweep-*</td></tr>
+        <tr><td>Data Sync</td><td>salesforce-data-sync</td><td>rcm-dsync-*</td></tr>
+        <tr><td>Gobodo</td><td>gobodo-infrastructure</td><td>gobodo-infrastructure-rds-*</td></tr>
+    </table>
+    <div class="review-note">
+        <strong>🔴 REVIEW:</strong> Verify mappings are accurate. IMPROVE: Add deployment commands. Add CI/CD pipeline references.
+    </div>
+
+    <h2>10) Migration Snapshot (Salesforce → RDS)</h2>
+    <h3>rcm-dsync footprint</h3>
+    <table>
+        <tr><th>Component</th><th>Dev/Staging</th><th>Production</th></tr>
+        <tr><td>Step Functions</td><td>rcm-dsync-sync-orchestrator-*</td><td class="flag">None</td></tr>
+        <tr><td>EventBridge</td><td>rcm-dsync-sync-schedule-*</td><td class="flag">None</td></tr>
+        <tr><td>Lambdas</td><td>rcm-dsync-compute-*</td><td class="flag">None</td></tr>
+        <tr><td>RDS</td><td>rcm-dsync-data-main-rds-stg</td><td class="flag">None</td></tr>
+    </table>
+    <div class="review-note security-warning">
+        <strong>🟡 FLAG:</strong> No production resources for rcm-dsync. Is this intentional (not yet deployed) or an inventory gap? Clarify production timeline.
+    </div>
+
+    <h2>11) Output Formats</h2>
+    <ul>
+        <li><strong>Entity schemas:</strong> JSON Schema definitions</li>
+        <li><strong>Relationships:</strong> Graph edges (see §5)</li>
+        <li><strong>Events:</strong> Catalog (see §7)</li>
+        <li><strong>Storage:</strong> Versioned markdown + <code>ontology-map.aws.yaml</code></li>
+    </ul>
+    <div class="review-note">
+        <strong>🔴 REVIEW:</strong> Define actual JSON/YAML schemas. Create OpenAPI spec for agents. Add example payloads.
+    </div>
+
+    <hr>
+
+    <h2>📋 Review Summary</h2>
+    <table class="summary-table">
+        <tr><th>Section</th><th>Priority</th><th>Action</th></tr>
+        <tr><td>1) Purpose</td><td class="priority-medium">Medium</td><td>Add success criteria, version governance</td></tr>
+        <tr><td>2) Domain Boundaries</td><td class="priority-medium">Medium</td><td>Add team ownership, UK contexts</td></tr>
+        <tr><td>3) System Landscape</td><td class="priority-high">HIGH</td><td>Fresh AWS scan, FIX Gobodo security</td></tr>
+        <tr><td>4) API Surface</td><td class="priority-medium">Medium</td><td>Add auth requirements per endpoint</td></tr>
+        <tr><td>5) Entity Model</td><td class="priority-medium">Medium</td><td>Add field definitions from schemas</td></tr>
+        <tr><td>6) Projections</td><td class="priority-medium">Medium</td><td>Define dashboard read models</td></tr>
+        <tr><td>7) Commands/Events</td><td class="priority-medium">Medium</td><td>Add sequence diagrams, Commands section</td></tr>
+        <tr><td>8) Policy & Safety</td><td class="priority-high">HIGH</td><td>Expand autonomy boundaries</td></tr>
+        <tr><td>9) Implementation</td><td class="priority-low">Low</td><td>Add deployment commands</td></tr>
+        <tr><td>10) Migration</td><td class="priority-high">HIGH</td><td>Clarify production status</td></tr>
+        <tr><td>11) Output Formats</td><td class="priority-high">HIGH</td><td>Create machine-readable schemas</td></tr>
+    </table>
+
+</body>
+</html>
