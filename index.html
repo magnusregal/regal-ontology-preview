@@ -423,46 +423,75 @@
     <p><em>Note: No Amplify apps found in production account (975050223773). Client Dashboard production may use different hosting.</em></p>
 
     <h3>3.6 CI/CD & Deployment Pipelines</h3>
+    <p><em>✅ Verified via GitHub org scan 2026-02-22 — Org: <code>Regal-Credit-Management</code> (38 repos)</em></p>
     <table>
-        <tr><th>App / Service</th><th>Pipeline</th><th>Repo</th><th>Trigger</th></tr>
+        <tr><th>App / Service</th><th>Pipeline</th><th>Repo</th><th>Last Updated</th></tr>
         <tr>
             <td><strong>Client Dashboard</strong></td>
             <td>AWS Amplify</td>
-            <td><code>client-dashboard</code></td>
-            <td>Push to main/dev/staging branches</td>
+            <td><code>RegalCreditB2BWebDashboard</code></td>
+            <td>2026-01-27 ✅</td>
+        </tr>
+        <tr>
+            <td><strong>Client Dashboard API</strong></td>
+            <td>TBD</td>
+            <td><code>client-dashboard-api-v2</code></td>
+            <td>2026-02-10 (New!)</td>
         </tr>
         <tr>
             <td><strong>Product Hub</strong></td>
             <td>AWS Amplify</td>
-            <td><code>product-hub</code></td>
-            <td>Push to main/dev/staging branches</td>
+            <td><code>Regal-Product-Hub</code></td>
+            <td>2026-02-20 ✅ (Your PR!)</td>
         </tr>
         <tr>
             <td><strong>RCM Serverless (APIs)</strong></td>
             <td>AWS CDK Pipelines</td>
-            <td><code>rcm-serverless</code></td>
-            <td>Push to main → auto-deploy dev → manual promote</td>
+            <td><code>rcm-serverless</code> + submodules</td>
+            <td>2026-02-03 (v1.7.4)</td>
         </tr>
         <tr>
             <td><strong>Keycloak</strong></td>
             <td>CDK / Manual</td>
-            <td><code>keycloak-v26</code></td>
-            <td>Manual deployment</td>
+            <td><code>keycloak-v26</code>, <code>keycloak-theme-partner-portal</code></td>
+            <td>2026-01-29</td>
         </tr>
         <tr>
             <td><strong>Gobodo</strong></td>
             <td>CDK Pipelines</td>
-            <td><code>gobodo-infrastructure</code></td>
-            <td>Push to main</td>
+            <td class="flag">❓ Repo not found in org</td>
+            <td>Unknown</td>
         </tr>
         <tr>
             <td><strong>Salesforce Data Sync</strong></td>
             <td>CDK Pipelines</td>
             <td><code>salesforce-data-sync</code></td>
-            <td>Push to main</td>
+            <td>2026-02-18 ✅</td>
+        </tr>
+        <tr>
+            <td><strong>Enrollment Pages</strong></td>
+            <td>TBD (not Amplify)</td>
+            <td><code>classic-registration-forms</code></td>
+            <td>2026-01-29</td>
+        </tr>
+        <tr>
+            <td><strong>Email Services</strong></td>
+            <td>TBD</td>
+            <td><code>rcm-email-classifier-service</code>, <code>rcm-email-templating-engine</code></td>
+            <td>2026-02-10</td>
         </tr>
     </table>
-    <p><em>Amplify apps auto-deploy on branch push. CDK Pipelines use CodePipeline with dev → staging → prod promotion.</em></p>
+    
+    <h4>Submodule Structure (rcm-serverless)</h4>
+    <pre style="background: #1a1a2e; padding: 1rem; border-radius: 6px;">
+rcm-serverless/
+├── core-submodule/      → core-cdk-lambda-* (account, client, array, keycloak-authorizer)
+├── cb-submodule/        → creditblock-cdk-lambda-* (bureau cases, credit reports)
+├── cs-submodule/        → cybersweep-cdk-lambda-* (identity protection)
+├── vendor-submodule/    → vendor-cdk-lambda-* (Array, Vouched integrations)
+├── utils-submodule/     → shared utilities
+└── test-submodule/      → test helpers</pre>
+    <p><em>Total: 327 Lambdas deployed (285 us-east-1 + 42 us-east-2)</em></p>
 
     <div class="validation-note">
         <strong>🔍 VALIDATION — Section 3:</strong>
