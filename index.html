@@ -1192,41 +1192,211 @@ rcm-serverless/
     </div>
 
     <h2 id="section-6">6) Projections & Read Models</h2>
-    <p><em>Target architecture for read-optimized views (DynamoDB, materialized views)</em></p>
-    <div class="review-note">
-        <strong>REVIEW:</strong> Section is sparse. Define specific read models for: Client Dashboard views, Partner aggregations, Reporting/analytics, Agent decision-making.
+    <p>The data architecture uses a two-stage approach: Salesforce data syncs to RDS (PostgreSQL) as the source of truth, then projections are built for fast read access.</p>
+    
+    <h3>6.1 RDS Tables (Source of Truth)</h3>
+    <p>67 Salesforce objects synced to PostgreSQL via <code>salesforce-data-sync</code>:</p>
+    
+    <details>
+    <summary><strong>Core CRM Objects</strong> (12 tables)</summary>
+    <div>
+    <table>
+        <tr><th>Table</th><th>Salesforce Object</th><th>Key Fields</th></tr>
+        <tr><td><code>accounts</code></td><td>Account (Person + Business)</td><td>sf_id, is_person_account, billing_*, person_mailing_*</td></tr>
+        <tr><td><code>contacts</code></td><td>Contact</td><td>sf_id, account_id, first_name, last_name, email, custom__key_cloak_i_d</td></tr>
+        <tr><td><code>cases</code></td><td>Case</td><td>sf_id, case_number, account_id, status, priority, is_closed</td></tr>
+        <tr><td><code>leads</code></td><td>Lead</td><td>sf_id, status, company, email</td></tr>
+        <tr><td><code>tasks</code></td><td>Task</td><td>sf_id, what_id, who_id, status, subject</td></tr>
+        <tr><td><code>events</code></td><td>Event</td><td>sf_id, what_id, who_id, start_datetime, end_datetime</td></tr>
+        <tr><td><code>notes</code></td><td>Note</td><td>sf_id, parent_id, body</td></tr>
+        <tr><td><code>attachments</code></td><td>Attachment</td><td>sf_id, parent_id, name, content_type</td></tr>
+        <tr><td><code>users</code></td><td>User</td><td>sf_id, username, email, is_active</td></tr>
+        <tr><td><code>groups</code></td><td>Group</td><td>sf_id, name, type</td></tr>
+        <tr><td><code>user_roles</code></td><td>UserRole</td><td>sf_id, name, parent_role_id</td></tr>
+        <tr><td><code>record_types</code></td><td>RecordType</td><td>sf_id, name, sobject_type</td></tr>
+    </table>
     </div>
-    <div class="validation-note">
-        <strong>VALIDATION — Section 6:</strong>
-        <ul>
-            <li><strong>AWS DynamoDB:</strong> Run <code>aws dynamodb list-tables</code> to find existing read tables</li>
-            <li><strong>AWS DynamoDB:</strong> Describe table schemas: <code>aws dynamodb describe-table --table-name &lt;name&gt;</code></li>
-            <li><strong>Git:</strong> Search for DynamoDB table definitions in CDK: <code>grep -r "dynamodb.Table" rcm-serverless/</code></li>
-            <li><strong>Client Dashboard:</strong> Review React components to identify data shapes needed</li>
-            <li><strong>Client Dashboard:</strong> Check Apollo/GraphQL queries if used, or REST call patterns</li>
-            <li><strong>RDS:</strong> Check for materialized views: <code>SELECT matviewname FROM pg_matviews WHERE schemaname = 'public'</code></li>
-        </ul>
+    </details>
+    
+    <details>
+    <summary><strong>Product & Pricing</strong> (3 tables)</summary>
+    <div>
+    <table>
+        <tr><th>Table</th><th>Salesforce Object</th><th>Key Fields</th></tr>
+        <tr><td><code>products</code></td><td>Product2</td><td>sf_id, name, product_code, is_active</td></tr>
+        <tr><td><code>pricebooks</code></td><td>Pricebook2</td><td>sf_id, name, is_active, is_standard</td></tr>
+        <tr><td><code>pricebook_entries</code></td><td>PricebookEntry</td><td>sf_id, product2_id, pricebook2_id, unit_price</td></tr>
+    </table>
     </div>
+    </details>
+    
+    <details>
+    <summary><strong>Regal Custom Objects</strong> (20+ tables)</summary>
+    <div>
+    <table>
+        <tr><th>Table</th><th>Purpose</th></tr>
+        <tr><td><code>custom_credit_blocks</code></td><td>Bureau freeze/unfreeze records</td></tr>
+        <tr><td><code>custom_credit_bureaus</code></td><td>Bureau configuration</td></tr>
+        <tr><td><code>custom_credit_reports</code></td><td>Credit report metadata</td></tr>
+        <tr><td><code>custom_client_managers</code></td><td>Partner contact → client relationships</td></tr>
+        <tr><td><code>custom_person_addresses</code></td><td>Client address history</td></tr>
+        <tr><td><code>custom_person_aliases</code></td><td>Client name aliases</td></tr>
+        <tr><td><code>custom_person_phone_numbers</code></td><td>Client phone numbers</td></tr>
+        <tr><td><code>custom_person_email_addresses</code></td><td>Client email addresses</td></tr>
+        <tr><td><code>custom_person_notifications</code></td><td>Push notification records</td></tr>
+        <tr><td><code>custom_unlock_requests</code></td><td>Credit unfreeze requests</td></tr>
+        <tr><td><code>custom_array_subscriptions</code></td><td>Array monitoring subscriptions</td></tr>
+        <tr><td><code>custom_array_event_logs</code></td><td>Array webhook events</td></tr>
+        <tr><td><code>custom_cyber_sweep_*</code></td><td>CyberSweep audit configs (5 tables)</td></tr>
+        <tr><td><code>custom_bt_stripe_*</code></td><td>Blackthorn Stripe integration (15 tables)</td></tr>
+    </table>
+    </div>
+    </details>
+    
+    <details>
+    <summary><strong>History & Audit Tables</strong> (4 tables)</summary>
+    <div>
+    <table>
+        <tr><th>Table</th><th>Purpose</th></tr>
+        <tr><td><code>account_histories</code></td><td>Account field change history</td></tr>
+        <tr><td><code>contact_histories</code></td><td>Contact field change history</td></tr>
+        <tr><td><code>sync_runs</code></td><td>Data sync execution audit</td></tr>
+        <tr><td><code>sync_batches</code></td><td>Sync batch tracking</td></tr>
+    </table>
+    </div>
+    </details>
+    
+    <h3>6.2 DynamoDB Projections (Planned)</h3>
+    <p>The <code>projection-builder</code> Lambda is designed but not yet implemented. Planned projections:</p>
+    <table>
+        <tr><th>Projection</th><th>Purpose</th><th>Access Pattern</th><th>Status</th></tr>
+        <tr><td>ClientSummary</td><td>Dashboard quick view</td><td>GET by client_id</td><td>Planned</td></tr>
+        <tr><td>PartnerClients</td><td>Partner's client list</td><td>Query by partner_id</td><td>Planned</td></tr>
+        <tr><td>BureauStatus</td><td>Credit freeze status</td><td>GET by client_id</td><td>Planned</td></tr>
+        <tr><td>RecentActivity</td><td>Timeline view</td><td>Query by client_id, sorted by date</td><td>Planned</td></tr>
+    </table>
+    
+    <h3>6.3 Current Read Patterns</h3>
+    <p>Until DynamoDB projections are built, reads go through:</p>
+    <ul>
+        <li><strong>API → Salesforce:</strong> Real-time queries via jsforce (current production)</li>
+        <li><strong>API → RDS:</strong> Sync database queries (dev/staging only)</li>
+        <li><strong>Gobodo:</strong> Custom object queries for Product Hub</li>
+    </ul>
 
     <h2 id="section-7">7) Commands vs Events</h2>
+    <p>The system uses CQRS-lite: commands modify state, events record what happened. Events drive async workflows via Step Functions and EventBridge.</p>
     
-    <h3>7.1 Commands (write intents)</h3>
-    <p><em>TODO: Add this section</em></p>
-
-    <h3>7.2 Canonical Events</h3>
+    <h3>7.1 Commands (Write Intents)</h3>
+    <p>Commands are synchronous API calls that modify state:</p>
+    
+    <details>
+    <summary><strong>Client Commands</strong></summary>
+    <div>
     <table>
-        <tr><th>Category</th><th>Events</th></tr>
-        <tr><td>Identity</td><td>device_registered, device_token_updated</td></tr>
-        <tr><td>Client</td><td>client_profile_updated, family_member_updated</td></tr>
-        <tr><td>Partner</td><td>partner_contact_created, client_visibility_changed</td></tr>
-        <tr><td>CreditBlock</td><td>bureau_block_requested, block_process_completed</td></tr>
-        <tr><td>Array</td><td>array_user_created, report_pdf_ready</td></tr>
-        <tr><td>CyberSweep</td><td>monitor_added, monitor_deleted</td></tr>
-        <tr><td>Data Sync</td><td>rcm_dsync_sync_completed</td></tr>
+        <tr><th>Command</th><th>Endpoint</th><th>Effect</th></tr>
+        <tr><td>UpdateClientProfile</td><td><code>PATCH /core/v1/client/{id}/profile</code></td><td>Updates client PII in Salesforce</td></tr>
+        <tr><td>AddFamilyMember</td><td><code>POST /core/v1/client/{id}/family</code></td><td>Creates family member record</td></tr>
+        <tr><td>UpdateFamilyMember</td><td><code>PATCH /core/v1/client/{id}/family/{fid}</code></td><td>Updates family member</td></tr>
+        <tr><td>CreateSupportCase</td><td><code>POST /core/v1/client/{id}/support</code></td><td>Opens support case</td></tr>
     </table>
-    <div class="review-note">
-        <strong>REVIEW:</strong> Verify event coverage is complete. IMPROVE: Add sequence diagrams for key flows. Add Commands section.
     </div>
+    </details>
+    
+    <details>
+    <summary><strong>Partner Commands</strong></summary>
+    <div>
+    <table>
+        <tr><th>Command</th><th>Endpoint</th><th>Effect</th></tr>
+        <tr><td>CreatePartnerContact</td><td><code>POST /core/v1/partner/contacts</code></td><td>Creates partner contact</td></tr>
+        <tr><td>UpdatePartnerContact</td><td><code>PATCH /core/v1/partner/contacts/{id}</code></td><td>Updates contact details</td></tr>
+        <tr><td>UpdatePartner</td><td><code>PATCH /core/v1/partner/{id}</code></td><td>Updates partner account</td></tr>
+    </table>
+    </div>
+    </details>
+    
+    <details>
+    <summary><strong>CreditBlock Commands</strong></summary>
+    <div>
+    <table>
+        <tr><th>Command</th><th>Endpoint</th><th>Effect</th></tr>
+        <tr><td>RequestBureauFreeze</td><td><code>POST /creditblock/v1/bureaus/{b}/block</code></td><td>Initiates credit freeze</td></tr>
+        <tr><td>RequestBureauUnfreeze</td><td><code>POST /creditblock/v1/bureaus/{b}/unblock</code></td><td>Initiates credit unfreeze</td></tr>
+        <tr><td>FreezeAllBureaus</td><td><code>POST /creditblock/v1/primary/blockall</code></td><td>Freezes all 3 bureaus</td></tr>
+        <tr><td>UnfreezeAllBureaus</td><td><code>POST /creditblock/v1/primary/unblockall</code></td><td>Unfreezes all 3 bureaus</td></tr>
+    </table>
+    </div>
+    </details>
+    
+    <details>
+    <summary><strong>Array Commands</strong></summary>
+    <div>
+    <table>
+        <tr><th>Command</th><th>Endpoint</th><th>Effect</th></tr>
+        <tr><td>RegisterArrayUser</td><td><code>POST /core/v1/array/register</code></td><td>Creates Array user</td></tr>
+        <tr><td>EnrollMonitoring</td><td><code>POST /core/v1/array/monitoring/enroll</code></td><td>Enrolls in credit monitoring</td></tr>
+        <tr><td>PullCreditReport</td><td><code>POST /core/v1/array/pullcreditreport</code></td><td>Orders credit report</td></tr>
+        <tr><td>OrderCreditReport</td><td><code>POST /vendor/array/v2/report/order</code></td><td>Orders report via Array v2</td></tr>
+    </table>
+    </div>
+    </details>
+    
+    <details>
+    <summary><strong>CyberSweep Commands</strong></summary>
+    <div>
+    <table>
+        <tr><th>Command</th><th>Endpoint</th><th>Effect</th></tr>
+        <tr><td>CreateIDPMonitor</td><td><code>POST /cybersweep/v1/idp/monitors/{aid}</code></td><td>Creates identity monitor</td></tr>
+        <tr><td>UpdateIDPMonitor</td><td><code>PATCH /cybersweep/v1/idp/monitors/{aid}/{mid}</code></td><td>Updates monitor config</td></tr>
+        <tr><td>DeleteIDPMonitor</td><td><code>DELETE /cybersweep/v1/idp/monitors/{aid}/{mid}</code></td><td>Removes monitor</td></tr>
+        <tr><td>QueueWebsiteAutomation</td><td><code>POST /cybersweep/v1/website/queue_automation</code></td><td>Queues Puppeteer task</td></tr>
+    </table>
+    </div>
+    </details>
+
+    <h3>7.2 Domain Events</h3>
+    <p>Events are emitted after state changes. They trigger async workflows and integrations:</p>
+    
+    <table>
+        <tr><th>Domain</th><th>Event</th><th>Trigger</th><th>Consumers</th></tr>
+        <tr><td rowspan="2">Identity</td><td><code>DeviceRegistered</code></td><td>Device enrolled</td><td>Notification service</td></tr>
+        <tr><td><code>DeviceTokenUpdated</code></td><td>Token refresh</td><td>Push notification routing</td></tr>
+        <tr><td rowspan="2">Client</td><td><code>ClientProfileUpdated</code></td><td>Profile change</td><td>Data sync, Audit log</td></tr>
+        <tr><td><code>FamilyMemberAdded</code></td><td>Family member created</td><td>Array enrollment check</td></tr>
+        <tr><td rowspan="2">Partner</td><td><code>PartnerContactCreated</code></td><td>Contact added</td><td>Keycloak provisioning</td></tr>
+        <tr><td><code>ClientVisibilityChanged</code></td><td>Visibility updated</td><td>Dashboard refresh</td></tr>
+        <tr><td rowspan="3">CreditBlock</td><td><code>BureauBlockRequested</code></td><td>Freeze initiated</td><td>Bureau API, Case creation</td></tr>
+        <tr><td><code>BureauBlockCompleted</code></td><td>Freeze confirmed</td><td>Notification, Dashboard</td></tr>
+        <tr><td><code>BureauBlockFailed</code></td><td>Freeze failed</td><td>Alert, Retry logic</td></tr>
+        <tr><td rowspan="4">Array</td><td><code>ArrayUserCreated</code></td><td>User registered</td><td>Monitoring enrollment</td></tr>
+        <tr><td><code>CreditReportOrdered</code></td><td>Report requested</td><td>Polling workflow</td></tr>
+        <tr><td><code>CreditReportReady</code></td><td>Report available</td><td>Client notification</td></tr>
+        <tr><td><code>MonitoringAlertReceived</code></td><td>Webhook from Array</td><td>Alert processing, Notification</td></tr>
+        <tr><td rowspan="2">CyberSweep</td><td><code>IDPMonitorCreated</code></td><td>Monitor added</td><td>Audit log</td></tr>
+        <tr><td><code>DarkWebAlertReceived</code></td><td>Webhook from CS</td><td>Client notification</td></tr>
+        <tr><td rowspan="2">DataSync</td><td><code>SyncRunCompleted</code></td><td>Sync finished</td><td>Projection builder</td></tr>
+        <tr><td><code>SyncRunFailed</code></td><td>Sync error</td><td>Alert, Retry</td></tr>
+    </table>
+    
+    <h3>7.3 Event Flow: Credit Freeze</h3>
+    <pre style="background: var(--surface); padding: 1rem; border-radius: 6px; font-size: 0.8rem;">
+User                API                  Lambda              Bureau API         Salesforce
+  │                  │                     │                    │                   │
+  │─RequestFreeze───▶│                     │                    │                   │
+  │                  │──BureauBlockCmd────▶│                    │                   │
+  │                  │                     │────FreezeRequest──▶│                   │
+  │                  │                     │◀───Accepted────────│                   │
+  │                  │                     │                    │                   │
+  │                  │                     │────CreateCase─────────────────────────▶│
+  │                  │                     │◀───CaseId──────────────────────────────│
+  │                  │◀─BureauBlockRequested─│                    │                   │
+  │◀─202 Accepted────│                     │                    │                   │
+  │                  │                     │                    │                   │
+  │           [async polling/webhook]      │                    │                   │
+  │                  │                     │◀───FreezeConfirmed─│                   │
+  │                  │◀─BureauBlockCompleted│                    │                   │
+  │◀─Push Notification─│                     │                    │                   │
+    </pre>
     <div class="validation-note">
         <strong>VALIDATION — Section 7:</strong>
         <ul>
