@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Endpoints Detail — Regal</title>
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --surface: #16213e;
+            --text: #eee;
+            --accent: #0f3460;
+            --red: #e94560;
+            --green: #4ecca3;
+            --yellow: #ffc107;
+            --blue: #00d9ff;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        h1 { color: var(--blue); margin-bottom: 0.5rem; }
+        h2 { color: var(--green); margin: 2rem 0 1rem; border-bottom: 1px solid var(--accent); padding-bottom: 0.5rem; }
+        h3 { color: var(--text); margin: 1.5rem 0 0.75rem; }
+        h4 { color: var(--blue); margin: 1rem 0 0.5rem; font-size: 1rem; }
+        a { color: var(--blue); }
+        .meta { color: #888; margin-bottom: 2rem; font-size: 0.9rem; }
+        .back-link { margin-bottom: 1rem; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85rem; }
+        th, td { padding: 0.5rem; text-align: left; border: 1px solid var(--accent); }
+        th { background: var(--accent); color: var(--blue); }
+        code { background: var(--accent); padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; }
+        pre { background: var(--surface); padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 0.8rem; margin: 0.5rem 0; }
+        details { margin: 0.5rem 0; }
+        summary { 
+            cursor: pointer; 
+            padding: 0.75rem; 
+            background: var(--surface); 
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        summary:hover { background: var(--accent); }
+        details[open] summary { border-radius: 4px 4px 0 0; }
+        details > div { 
+            padding: 1rem; 
+            background: rgba(255,255,255,0.02); 
+            border: 1px solid var(--accent);
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+        }
+        .method { 
+            display: inline-block; 
+            padding: 0.2rem 0.5rem; 
+            border-radius: 3px; 
+            font-size: 0.75rem; 
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        .method-get { background: var(--green); color: #000; }
+        .method-post { background: var(--blue); color: #000; }
+        .method-patch { background: var(--yellow); color: #000; }
+        .method-delete { background: var(--red); color: #fff; }
+        .method-put { background: #9b59b6; color: #fff; }
+        .schema-type { color: var(--blue); }
+        .schema-required { color: var(--red); font-size: 0.75rem; }
+        .response-code { font-weight: bold; }
+        .response-200 { color: var(--green); }
+        .response-400 { color: var(--yellow); }
+        .response-404 { color: var(--red); }
+    </style>
+</head>
+<body>
+    <div class="back-link"><a href="index.html">← Back to Ontology</a></div>
+    
+    <h1>API Endpoints Reference</h1>
+    <div class="meta">
+        Source: <code>rcm-serverless/swagger.yaml</code> | 
+        Base URLs: api.dev.regalcredit.com, api.stg.regalcredit.com, api.regalcredit.com
+    </div>
+
+    <h2>Authentication</h2>
+    <p>All endpoints require Keycloak JWT token in header:</p>
+    <pre>Authorization: Bearer &lt;jwt_token&gt;</pre>
+    <p>Token obtained from SSO endpoints (sso.*.regalcredit.com)</p>
+
+    <h2>Core Domain <code>/core/v1</code></h2>
+    
+    <h3>Account &amp; Device</h3>
+    
+    <details>
+        <summary><span class="method method-get">GET</span> <code>/core/v1/account/device/{userId}</code> — Get client devices</summary>
+        <div>
+            <h4>Parameters</h4>
+            <table>
+                <tr><th>Name</th><th>In</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                <tr><td>userId</td><td>path</td><td>string</td><td>Yes</td><td>Client (Person Account) or Client Manager (Contact) ID</td></tr>
+                <tr><td>deviceType</td><td>query</td><td>string</td><td>No</td><td>Filter by type: iOS, Android, Web</td></tr>
+            </table>
+            <h4>Response 200</h4>
+            <pre>{
+  "data": [
+    {
+      "id": "string",
+      "userId": "string",
+      "deviceType": "iOS" | "Android" | "Web",
+      "deviceToken": "string",
+      "createdAt": "ISO8601"
+    }
+  ],
+  "message": "string"
+}</pre>
+            <h4>Errors</h4>
+            <p><span class="response-code response-400">400</span> Failed to get clients / devices</p>
+            <p><span class="response-code response-404">404</span> No contact record found</p>
+        </div>
+    </details>
+    
+    <details>
+        <summary><span class="method method-post">POST</span> <code>/core/v1/account/device</code> — Enroll device for push notifications</summary>
+        <div>
+            <h4>Request Body</h4>
+            <pre>{
+  "userId": "string",      // Required - Person Account or Contact ID
+  "deviceType": "string",  // Required - iOS, Android, Web
+  "deviceToken": "string"  // Required - Unique device token
+}</pre>
+            <h4>Response 200</h4>
+            <pre>{
+  "data": {
+    "id": "string",
+    "userId": "string",
+    "deviceType": "string",
+    "deviceToken": "string",
+    "createdAt": "ISO8601"
+  },
+  "message": "string"
+}</pre>
+            <h4>Errors</h4>
+            <p><span class="response-code response-400">400</span> Invalid body / Token already exists</p>
+        </div>
+    </details>
+
+    <details>
+        <summary><span class="method method-patch">PATCH</span> <code>/core/v1/account/device/{deviceId}</code> — Update device</summary>
+        <div>
+            <h4>Request Body</h4>
+            <pre>{
+  "deviceToken": "string"  // Required - New device token
+}</pre>
+        </div>
+    </details>
+
+    <h3>Client Management</h3>
+    
+    <details>
+        <summary><span class="method method-get">GET</span> <code>/core/v1/client/{clientId}</code> — Get client details</summary>
+        <div>
+            <h4>Response Schema: Client</h4>
+            <pre>{
+  "id": "string",
+  "firstName": "string",
+  "lastName": "string",
+  "middleName": "string",
+  "personBirthdate": "string",
+  "currentAddress": "string",
+  "previousAddress": "string",
+  "aliases": [
+    { "name": "string", "active": boolean }
+  ],
+  "addresses": [
+    {
+      "street": "string",
+      "city": "string",
+      "state": "string",
+      "postalCode": "string",
+      "countryCode": "string"
+    }
+  ],
+  "phone": ["string"],
+  "email": ["string"],
+  "ssn": "string",
+  "personMobile": "string",
+  "personEmail": "string",
+  "csPersonalEmail": "string",
+  "suffix": "string"
+}</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary><span class="method method-get">GET</span> <code>/core/v1/client/{clientId}/profile</code> — Get client profile</summary>
+        <div>
+            <h4>Response Schema: ClientProfile</h4>
+            <pre>{
+  "FirstName": "string",
+  "LastName": "string",
+  "DoB": "string",
+  "Family": "string",
+  "SSN": "string",
+  "Mobile": "string",
+  "Email": "string",
+  "Address": {
+    "Street": "string",
+    "City": "string",
+    "State": "string",
+    "PostalCode": "string",
+    "Country": "string"
+  }
+}</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary><span class="method method-get">GET</span> <code>/core/v1/client/{clientId}/family</code> — List family members</summary>
+        <div>
+            <h4>Response Schema: ClientsFamily</h4>
+            <pre>{
+  "id": "string",
+  "name": "string",
+  "firstName": "string",
+  "lastName": "string",
+  "birthday": "string",
+  "city": "string",
+  "state": "string",
+  "spouse": {
+    "id": "string",
+    "fullName": "string",
+    "firstName": "string",
+    "lastName": "string",
+    "city": "string",
+    "state": "string",
+    "birthday": "string",
+    "profile": "string"
+  },
+  "dependents": [
+    {
+      "id": "string",
+      "fullName": "string",
+      "firstName": "string",
+      "lastName": "string",
+      "city": "string",
+      "state": "string",
+      "birthday": "string",
+      "profile": "string"
+    }
+  ]
+}</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary><span class="method method-post">POST</span> <code>/core/v1/client/{clientId}/support</code> — Create support case</summary>
+        <div>
+            <h4>Request Schema: CaseCustomerSupport</h4>
+            <pre>{
+  "accountId": "string",      // Required
+  "supportType": "string",    // Required - e.g., "Missing Client"
+  "ticketType": "string",     // Required - e.g., "Customer Support"
+  "status": "string",         // Required - e.g., "New"
+  "caseOrigin": "string",     // Required - e.g., "Client Dashboard - Desktop"
+  "subject": "string",        // Required
+  "description": "string"     // Required
+}</pre>
+        </div>
+    </details>
+
+    <h3>Partner Management</h3>
+    
+    <details>
+        <summary><span class="method method-get">GET</span> <code>/core/v1/partner</code> — List all partners</summary>
+        <div>
+            <h4>Response: Array of Partner</h4>
+            <pre>[
+  {
+    "id": "string",           // Salesforce ID
+    "accountName": "string",
+    "priceBookId": "string",
+    "phone": "string",
+    "website": "string",
+    "billingStreet": "string",
+    "billingCity": "string",
+    "billingState": "string",
+    "billingPostalCode": "string",
+    "billingCountry": "string"
+  }
+]</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary><span class="method method-get">GET</span> <code>/core/v1/partner/contacts</code> — List partner contacts</summary>
+        <div>
+            <h4>Response Schema: PartnerContact[]</h4>
+            <pre>[
+  {
+    "id": "string",
+    "firstName": "string",
+    "lastName": "string",
+    "email": "string",
+    "phone": "string",
+    "accountId": "string",
+    "role": "string"
+  }
+]</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary><span class="method method-post">POST</span> <code>/core/v1/partner/contacts</code> — Create partner contact</summary>
+        <div>
+            <h4>Request Body</h4>
+            <pre>{
+  "firstName": "string",
+  "lastName": "string",
+  "email": "string",
+  "phone": "string",
+  "accountId": "string",
+  "role": "string"
+}</pre>
+        </div>
+    </details>
+
+    <h2>CreditBlock Domain <code>/creditblock/v1</code></h2>
+    
+    <details>
+        <summary><span class="method method-get">GET</span> <code>/creditblock/v1/bureaus/summary/{clientId}</code> — Get bureau freeze summary</summary>
+        <div>
+            <h4>Response</h4>
+            <pre>{
+  "experian": { "status": "frozen" | "unfrozen" | "pending", "lastUpdated": "ISO8601" },
+  "equifax": { "status": "frozen" | "unfrozen" | "pending", "lastUpdated": "ISO8601" },
+  "transunion": { "status": "frozen" | "unfrozen" | "pending", "lastUpdated": "ISO8601" }
+}</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary><span class="method method-post">POST</span> <code>/creditblock/v1/bureaus/{bureau}/block</code> — Request credit freeze</summary>
+        <div>
+            <h4>Path Parameters</h4>
+            <p><code>bureau</code>: <code>experian</code> | <code>equifax</code> | <code>transunion</code></p>
+            <h4>Request Schema: BureauBlockPayload</h4>
+            <pre>{
+  "clientId": "string",  // Required
+  "fromDate": "string",  // Optional
+  "toDate": "string"     // Optional
+}</pre>
+            <h4>Response Schema: BureauCase</h4>
+            <pre>{
+  "CaseId": "string",
+  "AccountId": "string",
+  "CaseOwner": "string",
+  "CaseReason": "string",
+  "ReblockDate": "string",
+  "RecordTypeId": "string",
+  "Status": "string"
+}</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary><span class="method method-post">POST</span> <code>/creditblock/v1/bureaus/{bureau}/unblock</code> — Request credit unfreeze</summary>
+        <div>
+            <h4>Path Parameters</h4>
+            <p><code>bureau</code>: <code>experian</code> | <code>equifax</code> | <code>transunion</code></p>
+            <h4>Request Schema: BureauUnblockPayload</h4>
+            <pre>{
+  "clientId": "string"  // Required
+}</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary><span class="method method-post">POST</span> <code>/creditblock/v1/primary/blockall</code> — Freeze all 3 bureaus</summary>
+        <div>
+            <h4>Request</h4>
+            <pre>{ "clientId": "string" }</pre>
+            <h4>Response</h4>
+            <p>Returns array of 3 BureauCase objects (one per bureau)</p>
+        </div>
+    </details>
+
+    <h2>CyberSweep Domain <code>/cybersweep/v1</code></h2>
+    
+    <details>
+        <summary><span class="method method-get">GET</span> <code>/cybersweep/v1/idp/monitors/{accountId}</code> — List IDP monitors</summary>
+        <div>
+            <h4>Response Schema: Idp_Monitoring[]</h4>
+            <pre>{
+  "ssn": [
+    {
+      "id": "string",
+      "dateAdded": "ISO8601"
+    }
+  ]
+}</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary><span class="method method-post">POST</span> <code>/cybersweep/v1/idp/monitors/{accountId}</code> — Create IDP monitor</summary>
+        <div>
+            <h4>Request Schema: Idp_Monitoring_Post</h4>
+            <pre>{
+  "ssn": "string",
+  "firstName": "string",
+  "lastName": "string",
+  "feature": "string"
+}</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary><span class="method method-delete">DELETE</span> <code>/cybersweep/v1/idp/monitors/{accountId}/{monitorId}</code> — Delete monitor</summary>
+        <div>
+            <h4>Response</h4>
+            <pre>{ "message": "Monitor deleted successfully" }</pre>
+        </div>
+    </details>
+
+    <h2>Vendor Domain <code>/vendor</code></h2>
+    
+    <h3>Array v2 (Current)</h3>
+    
+    <details>
+        <summary><span class="method method-post">POST</span> <code>/vendor/array/v2/user</code> — Create Array user</summary>
+        <div>
+            <h4>Request: ArrayClientData</h4>
+            <pre>{
+  "clientId": "string",
+  "firstName": "string",
+  "lastName": "string",
+  "ssn": "string",
+  "dateOfBirth": "string",
+  "address": {
+    "street": "string",
+    "city": "string",
+    "state": "string",
+    "zip": "string"
+  }
+}</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary><span class="method method-post">POST</span> <code>/vendor/array/v2/report/order</code> — Order credit report</summary>
+        <div>
+            <h4>Request</h4>
+            <pre>{
+  "userId": "string",
+  "reportType": "string"
+}</pre>
+            <h4>Response</h4>
+            <pre>{
+  "reportId": "string",
+  "status": "pending" | "complete",
+  "orderedAt": "ISO8601"
+}</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary><span class="method method-get">GET</span> <code>/vendor/array/v2/report/pdf</code> — Get PDF credit report</summary>
+        <div>
+            <h4>Query Parameters</h4>
+            <table>
+                <tr><th>Name</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                <tr><td>reportId</td><td>string</td><td>Yes</td><td>Report ID from order response</td></tr>
+            </table>
+            <h4>Response</h4>
+            <p>Returns PDF binary or base64-encoded string</p>
+        </div>
+    </details>
+
+    <h2>Common Response Patterns</h2>
+    
+    <h3>Success Response</h3>
+    <pre>{
+  "data": { ... },
+  "message": "Success message"
+}</pre>
+
+    <h3>Error Response</h3>
+    <pre>{
+  "error": "Error type",
+  "message": "Human-readable error description"
+}</pre>
+
+    <h3>HTTP Status Codes</h3>
+    <table>
+        <tr><th>Code</th><th>Meaning</th><th>When Used</th></tr>
+        <tr><td class="response-200">200</td><td>OK</td><td>Successful GET, PATCH</td></tr>
+        <tr><td class="response-200">201</td><td>Created</td><td>Successful POST</td></tr>
+        <tr><td class="response-400">400</td><td>Bad Request</td><td>Invalid input, validation error</td></tr>
+        <tr><td>401</td><td>Unauthorized</td><td>Missing or invalid token</td></tr>
+        <tr><td>403</td><td>Forbidden</td><td>Insufficient permissions</td></tr>
+        <tr><td class="response-404">404</td><td>Not Found</td><td>Resource does not exist</td></tr>
+        <tr><td>500</td><td>Server Error</td><td>Internal error</td></tr>
+    </table>
+
+</body>
+</html>

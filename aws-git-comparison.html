@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS ↔ Git Cross-Reference — Regal</title>
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --surface: #16213e;
+            --text: #eee;
+            --accent: #0f3460;
+            --red: #e94560;
+            --green: #4ecca3;
+            --yellow: #ffc107;
+            --blue: #00d9ff;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        h1 { color: var(--blue); margin-bottom: 0.5rem; }
+        h2 { color: var(--green); margin: 2rem 0 1rem; border-bottom: 1px solid var(--accent); padding-bottom: 0.5rem; }
+        h3 { color: var(--text); margin: 1.5rem 0 0.75rem; }
+        a { color: var(--blue); }
+        .meta { color: #888; margin-bottom: 2rem; font-size: 0.9rem; }
+        .back-link { margin-bottom: 1rem; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85rem; }
+        th, td { padding: 0.5rem; text-align: left; border: 1px solid var(--accent); }
+        th { background: var(--accent); color: var(--blue); }
+        code { background: var(--accent); padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; }
+        pre { background: var(--surface); padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 0.8rem; }
+        .status-ok { color: var(--green); }
+        .status-warn { color: var(--yellow); }
+        .status-error { color: var(--red); }
+        .tag { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.75rem; }
+        .tag-active { background: var(--green); color: #000; }
+        .tag-external { background: var(--blue); color: #000; }
+        .tag-missing { background: var(--red); color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="back-link"><a href="index.html">← Back to Ontology</a></div>
+    
+    <h1>AWS ↔ Git Cross-Reference</h1>
+    <div class="meta">
+        Generated: 2026-02-22 | AWS Accounts: 865942198740 (Dev), 975050223773 (Prod)
+    </div>
+
+    <h2>Summary</h2>
+    <table>
+        <tr><th>AWS Component</th><th>Git Repository</th><th>Status</th></tr>
+        <tr>
+            <td><code>core-cdk-lambda-*</code></td>
+            <td><code>rcm-serverless</code> + <code>core-submodule</code></td>
+            <td><span class="tag tag-active">Active</span></td>
+        </tr>
+        <tr>
+            <td><code>creditblock-cdk-lambda-*</code></td>
+            <td><code>rcm-serverless</code> + <code>cb-submodule</code></td>
+            <td><span class="tag tag-active">Active</span></td>
+        </tr>
+        <tr>
+            <td><code>cybersweep-cdk-lambda-*</code></td>
+            <td><code>rcm-serverless</code> + <code>cs-submodule</code></td>
+            <td><span class="tag tag-active">Active</span></td>
+        </tr>
+        <tr>
+            <td><code>vendor-cdk-lambda-*</code></td>
+            <td><code>rcm-serverless</code> + <code>vendor-submodule</code></td>
+            <td><span class="tag tag-active">Active</span></td>
+        </tr>
+        <tr>
+            <td><code>rcm-dsync-*</code></td>
+            <td><code>salesforce-data-sync</code></td>
+            <td><span class="tag tag-active">Active</span></td>
+        </tr>
+        <tr>
+            <td><code>gobodo-*</code></td>
+            <td><code>gobodo/gobodo-core</code></td>
+            <td><span class="tag tag-external">External Org</span></td>
+        </tr>
+        <tr>
+            <td>Keycloak Aurora</td>
+            <td><code>keycloak-v26</code>, <code>keycloak-theme-partner-portal</code></td>
+            <td><span class="tag tag-active">Active</span></td>
+        </tr>
+        <tr>
+            <td>Product Hub Amplify</td>
+            <td><code>Regal-Product-Hub</code></td>
+            <td><span class="tag tag-active">Active</span></td>
+        </tr>
+        <tr>
+            <td>Client Dashboard Amplify</td>
+            <td><code>RegalCreditB2BWebDashboard</code></td>
+            <td><span class="tag tag-active">Active</span></td>
+        </tr>
+    </table>
+
+    <h2>Repository Details</h2>
+
+    <h3>Regal-Credit-Management (38 repos)</h3>
+    <table>
+        <tr><th>Repository</th><th>Last Updated</th><th>Purpose</th></tr>
+        <tr><td><code>rcm-serverless</code></td><td>2026-02-03</td><td>Main serverless APIs (v1.7.4)</td></tr>
+        <tr><td><code>salesforce-data-sync</code></td><td>2026-02-18</td><td>SF → RDS sync pipeline</td></tr>
+        <tr><td><code>Regal-Product-Hub</code></td><td>2026-02-20</td><td>Product Hub frontend</td></tr>
+        <tr><td><code>RegalCreditB2BWebDashboard</code></td><td>2026-01-27</td><td>Client Dashboard frontend</td></tr>
+        <tr><td><code>client-dashboard-api-v2</code></td><td>2026-02-10</td><td>New Dashboard API</td></tr>
+        <tr><td><code>keycloak-v26</code></td><td>2025-01-23</td><td>Keycloak configuration</td></tr>
+        <tr><td><code>keycloak-theme-partner-portal</code></td><td>2026-01-29</td><td>Keycloak theme</td></tr>
+        <tr><td><code>classic-registration-forms</code></td><td>2026-01-29</td><td>Enrollment pages</td></tr>
+        <tr><td><code>rcm-email-classifier-service</code></td><td>2026-02-10</td><td>Email processing</td></tr>
+        <tr><td><code>rcm-email-templating-engine</code></td><td>2026-02-10</td><td>Email templates</td></tr>
+        <tr><td><code>task-webhook-service</code></td><td>2026-02-10</td><td>Webhook handling</td></tr>
+    </table>
+
+    <h3>gobodo (External Organization)</h3>
+    <table>
+        <tr><th>Repository</th><th>Language</th><th>Purpose</th></tr>
+        <tr><td><code>gobodo/gobodo-core</code></td><td>Java</td><td>Core Gobodo engine</td></tr>
+        <tr><td><code>gobodo/gobodo-api-js-promise</code></td><td>JavaScript</td><td>JS client library</td></tr>
+    </table>
+
+    <h2>Submodule Structure</h2>
+    <pre>
+rcm-serverless/
+├── packages/
+│   ├── core-submodule/      → core-cdk-lambda-* (account, client, array, auth)
+│   ├── cb-submodule/        → creditblock-cdk-lambda-* (bureau cases)
+│   ├── cs-submodule/        → cybersweep-cdk-lambda-* (IDP monitors)
+│   ├── vendor-submodule/    → vendor-cdk-lambda-* (Array, Vouched)
+│   └── utils-submodule/     → shared utilities
+├── stacks/
+│   ├── core.stack.ts        → Core domain CDK
+│   ├── cb.stack.ts          → CreditBlock CDK
+│   ├── cs.stack.ts          → CyberSweep CDK
+│   ├── vendor.stack.ts      → Vendor CDK
+│   └── pipeline.stack.ts    → CI/CD pipeline
+└── swagger.yaml             → OpenAPI 3.0 spec (48 endpoints)
+    </pre>
+
+    <h2>Lambda Counts</h2>
+    <table>
+        <tr><th>Region</th><th>Account</th><th>Count</th></tr>
+        <tr><td>us-east-1</td><td>Dev (865942198740)</td><td>285</td></tr>
+        <tr><td>us-east-2</td><td>Dev (865942198740)</td><td>42</td></tr>
+        <tr><td>us-east-1</td><td>Prod (975050223773)</td><td>TBD</td></tr>
+    </table>
+
+    <h2>CloudFormation Stacks</h2>
+    
+    <h3>Development Account (34 stacks)</h3>
+    <table>
+        <tr><th>Stack Pattern</th><th>Purpose</th></tr>
+        <tr><td><code>rcm-core-cdk-stack-*</code></td><td>Core domain</td></tr>
+        <tr><td><code>rcm-creditblock-cdk-stack-*</code></td><td>CreditBlock domain</td></tr>
+        <tr><td><code>rcm-cybersweep-cdk-stack-*</code></td><td>CyberSweep domain</td></tr>
+        <tr><td><code>rcm-pipeline-*-stack-*</code></td><td>CI/CD pipelines</td></tr>
+        <tr><td><code>gobodo-*</code></td><td>Gobodo infrastructure</td></tr>
+        <tr><td><code>keycloak-development</code></td><td>Keycloak cluster</td></tr>
+        <tr><td><code>regal-dev-vpc</code>, <code>regal-stg-vpc</code></td><td>VPC networking</td></tr>
+    </table>
+
+    <h3>Production Account (21 stacks)</h3>
+    <table>
+        <tr><th>Stack Pattern</th><th>Purpose</th></tr>
+        <tr><td><code>rcm-*-cdk-stack-production</code></td><td>Production deployments</td></tr>
+        <tr><td><code>rcm-pipeline-*-stack-production</code></td><td>Production pipelines</td></tr>
+        <tr><td><code>keycloak-v16-release</code></td><td>Production Keycloak</td></tr>
+    </table>
+
+    <h2>Unmapped Resources</h2>
+    
+    <h3>AWS Resources Without Git Mapping</h3>
+    <table>
+        <tr><th>Resource</th><th>Notes</th></tr>
+        <tr><td><code>amplify-login-*</code> Lambdas</td><td>Auto-generated Cognito triggers</td></tr>
+        <tr><td><code>array*</code> Lambdas (legacy)</td><td>Legacy Array integration</td></tr>
+        <tr><td>Test stacks (<code>-test-alex</code>, etc.)</td><td>Developer sandboxes</td></tr>
+    </table>
+
+    <h3>Git Repos Without AWS Mapping</h3>
+    <table>
+        <tr><th>Repository</th><th>Notes</th></tr>
+        <tr><td><code>Data-Analytics</code></td><td>Analytics (external?)</td></tr>
+        <tr><td><code>genealogy-platform</code></td><td>Unknown purpose</td></tr>
+        <tr><td><code>rcm-n8n</code></td><td>n8n workflows</td></tr>
+    </table>
+
+</body>
+</html>
