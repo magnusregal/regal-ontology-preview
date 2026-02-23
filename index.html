@@ -543,102 +543,115 @@ rcm-serverless/
     </table>
 
     <h3>4.3 Route Catalog</h3>
+    <p><em>✅ Verified via <code>rcm-serverless/swagger.yaml</code> — 48 endpoints, 84 routes in API Gateway</em></p>
     
-    <h4>Core APIs (<code>/core/v1/*</code>)</h4>
+    <h4>Core APIs (<code>/core/v1/*</code>) — 31 endpoints</h4>
+    
+    <h5>Account & Device</h5>
     <table>
-        <tr><th>Route</th><th>Method</th><th>Lambda</th><th>Scopes Required</th><th>Description</th></tr>
-        <tr>
-            <td><code>/core/v1/partner/contacts</code></td>
-            <td>GET, POST</td>
-            <td>core-cdk-lambda-contact-*</td>
-            <td><code>partner:read</code>, <code>partner:write</code></td>
-            <td>Partner contact management</td>
-        </tr>
-        <tr>
-            <td><code>/core/v1/client/{id}</code></td>
-            <td>GET, PATCH</td>
-            <td>core-cdk-lambda-client-*</td>
-            <td><code>client:read</code>, <code>client:write</code></td>
-            <td>Client profile operations</td>
-        </tr>
-        <tr>
-            <td><code>/core/v1/client/{id}/family</code></td>
-            <td>GET, POST</td>
-            <td>core-cdk-lambda-client-*</td>
-            <td><code>client:read</code>, <code>client:write</code></td>
-            <td>Family member management</td>
-        </tr>
-        <tr>
-            <td><code>/core/v1/client/{id}/notifications</code></td>
-            <td>GET, POST</td>
-            <td>core-cdk-lambda-notification-*</td>
-            <td><code>notification:read</code>, <code>notification:write</code></td>
-            <td>Client notifications</td>
-        </tr>
-        <tr>
-            <td><code>/core/v1/array/*</code></td>
-            <td>Various</td>
-            <td>core-cdk-lambda-array-*</td>
-            <td><code>array:read</code>, <code>array:write</code></td>
-            <td>Array integration endpoints</td>
-        </tr>
+        <tr><th>Route</th><th>Method</th><th>Lambda</th><th>Description</th></tr>
+        <tr><td><code>/core/v1/account/device/{userId}</code></td><td>GET</td><td>AccountLambda</td><td>Get client's devices</td></tr>
+        <tr><td><code>/core/v1/account/device</code></td><td>POST</td><td>AccountLambda</td><td>Enroll device for push notifications</td></tr>
+        <tr><td><code>/core/v1/account/device/{deviceId}</code></td><td>PATCH</td><td>AccountLambda</td><td>Update device settings</td></tr>
+    </table>
+    
+    <h5>Client Management</h5>
+    <table>
+        <tr><th>Route</th><th>Method</th><th>Lambda</th><th>Description</th></tr>
+        <tr><td><code>/core/v1/client/{clientId}</code></td><td>GET</td><td>ContactLambda</td><td>Get client details</td></tr>
+        <tr><td><code>/core/v1/client/{clientId}/profile</code></td><td>GET, PATCH</td><td>ContactLambda</td><td>Client profile operations</td></tr>
+        <tr><td><code>/core/v1/client/{clientId}/family</code></td><td>GET</td><td>ClientFamilyLambda</td><td>List family members</td></tr>
+        <tr><td><code>/core/v1/client/{clientId}/family/{familyId}</code></td><td>GET, PATCH</td><td>ClientFamilyLambda</td><td>Family member CRUD</td></tr>
+        <tr><td><code>/core/v1/client/{clientId}/support</code></td><td>POST</td><td>CaseSupportLambda</td><td>Create support case</td></tr>
+    </table>
+    
+    <h5>Partner Management</h5>
+    <table>
+        <tr><th>Route</th><th>Method</th><th>Lambda</th><th>Description</th></tr>
+        <tr><td><code>/core/v1/partner</code></td><td>GET</td><td>ContactLambda</td><td>List all partners</td></tr>
+        <tr><td><code>/core/v1/partner/{partnerId}</code></td><td>GET, PATCH</td><td>ContactLambda</td><td>Partner details</td></tr>
+        <tr><td><code>/core/v1/partner/{partnerId}/pricebook</code></td><td>GET</td><td>ContactLambda</td><td>Partner pricebook</td></tr>
+        <tr><td><code>/core/v1/partner/{partnerId}/registration</code></td><td>GET</td><td>ContactLambda</td><td>Registration settings</td></tr>
+        <tr><td><code>/core/v1/partner/contacts</code></td><td>GET, POST</td><td>ContactLambda</td><td>Partner contacts list/create</td></tr>
+        <tr><td><code>/core/v1/partner/contacts/{contactId}</code></td><td>GET, PATCH</td><td>ContactLambda</td><td>Contact details</td></tr>
+        <tr><td><code>/core/v1/partner/contacts/{contactId}/clients</code></td><td>GET</td><td>ClientContactRelationshipLambda</td><td>Contact's clients</td></tr>
+        <tr><td><code>/core/v1/partner/client-managers/{contactId}/clients</code></td><td>GET</td><td>PartnerClientManagerLambda</td><td>CM's clients</td></tr>
+    </table>
+    
+    <h5>Array Integration (Credit Reports)</h5>
+    <table>
+        <tr><th>Route</th><th>Method</th><th>Lambda</th><th>Description</th></tr>
+        <tr><td><code>/core/v1/array/enrollment/{clientId}</code></td><td>GET</td><td>ArrayGetEnrollmentLambda</td><td>Get enrollment status</td></tr>
+        <tr><td><code>/core/v1/array/enrollment/report</code></td><td>POST</td><td>ArrayProductEnrollmentLambda</td><td>Generate enrollment report</td></tr>
+        <tr><td><code>/core/v1/array/monitoring/enroll</code></td><td>POST</td><td>ArrayMonitoringEnrollmentLambda</td><td>Enroll in credit monitoring</td></tr>
+        <tr><td><code>/core/v1/array/pullcreditreport</code></td><td>POST</td><td>ArrayPullCreditReportLambda</td><td>Pull credit report</td></tr>
+        <tr><td><code>/core/v1/array/register</code></td><td>POST</td><td>ArrayUserRegistrationLambda</td><td>Register with Array</td></tr>
+        <tr><td><code>/core/v1/array/register/{arrayClientKey}</code></td><td>GET</td><td>ArrayUserRegistrationDetailsLambda</td><td>Registration details</td></tr>
+        <tr><td><code>/core/v1/array/listener</code></td><td>POST</td><td>ArrayWebhook*Lambda</td><td>Array webhook listener</td></tr>
+    </table>
+    
+    <h5>Notifications</h5>
+    <table>
+        <tr><th>Route</th><th>Method</th><th>Lambda</th><th>Description</th></tr>
+        <tr><td><code>/core/v1/notifications/client/{accountId}</code></td><td>GET</td><td>PersonNotificationsLambda</td><td>List notifications</td></tr>
+        <tr><td><code>/core/v1/notifications/client/{accountId}/{notificationId}</code></td><td>GET, PATCH</td><td>PersonNotificationsLambda</td><td>Notification detail/update</td></tr>
+    </table>
+    
+    <h5>Verified (Vouched KYC)</h5>
+    <table>
+        <tr><th>Route</th><th>Method</th><th>Lambda</th><th>Description</th></tr>
+        <tr><td><code>/core/v1/verified</code></td><td>POST</td><td>VouchedVerifiedLambda</td><td>Start verification</td></tr>
+        <tr><td><code>/core/v1/verified/case</code></td><td>POST</td><td>VouchedVerifiedLambda</td><td>Create verification case</td></tr>
+        <tr><td><code>/core/v1/verified/case/{contactId}</code></td><td>GET</td><td>VouchedVerifiedLambda</td><td>Get verification status</td></tr>
+        <tr><td><code>/core/v1/verified/businessManager/{contactId}</code></td><td>GET</td><td>VouchedVerifiedLambda</td><td>Check BM verification</td></tr>
+    </table>
+    
+    <h5>Controls (SF Picklists)</h5>
+    <table>
+        <tr><th>Route</th><th>Method</th><th>Lambda</th><th>Description</th></tr>
+        <tr><td><code>/core/v1/controls/list/{object}/{field}</code></td><td>GET</td><td>ControlsLambda</td><td>Get picklist values from Salesforce</td></tr>
     </table>
 
-    <h4>CreditBlock APIs (<code>/creditblock/*</code>)</h4>
+    <h4>CreditBlock APIs (<code>/creditblock/v1/*</code>) — 8 endpoints</h4>
     <table>
-        <tr><th>Route</th><th>Method</th><th>Lambda</th><th>Scopes Required</th><th>Description</th></tr>
-        <tr>
-            <td><code>/creditblock/v1/bureaus</code></td>
-            <td>GET</td>
-            <td>creditblock-cdk-lambda-bureau-*</td>
-            <td><code>creditblock:read</code></td>
-            <td>List bureau status</td>
-        </tr>
-        <tr>
-            <td><code>/creditblock/v1/bureaus/block</code></td>
-            <td>POST</td>
-            <td>creditblock-cdk-lambda-bureau-*</td>
-            <td><code>creditblock:write</code></td>
-            <td>Request credit freeze</td>
-        </tr>
-        <tr>
-            <td><code>/creditblock/v1/bureaus/unblock</code></td>
-            <td>POST</td>
-            <td>creditblock-cdk-lambda-bureau-*</td>
-            <td><code>creditblock:write</code></td>
-            <td>Request credit unfreeze</td>
-        </tr>
+        <tr><th>Route</th><th>Method</th><th>Lambda</th><th>Description</th></tr>
+        <tr><td><code>/creditblock/v1/bureaus/summary/{clientId}</code></td><td>GET</td><td>BureauCaseLambda</td><td>Get bureau freeze summary for client</td></tr>
+        <tr><td><code>/creditblock/v1/bureaus/{bureau}/checkStatus</code></td><td>GET, POST</td><td>BureauCaseLambda</td><td>Check/initiate freeze status</td></tr>
+        <tr><td><code>/creditblock/v1/bureaus/{bureau}/block</code></td><td>POST</td><td>BureauBlockLambda</td><td>Request credit freeze</td></tr>
+        <tr><td><code>/creditblock/v1/bureaus/{bureau}/unblock</code></td><td>POST</td><td>BureauUnblockLambda</td><td>Request credit unfreeze</td></tr>
+        <tr><td><code>/creditblock/v1/primary/blockall</code></td><td>POST</td><td>BureauBlockLambda</td><td>Freeze all 3 bureaus</td></tr>
+        <tr><td><code>/creditblock/v1/primary/unblockall</code></td><td>POST</td><td>BureauUnblockLambda</td><td>Unfreeze all 3 bureaus</td></tr>
+        <tr><td><code>/creditblock/v1/checkStatusResult/{token}</code></td><td>GET</td><td>BureauCaseLambda</td><td>Get async status result</td></tr>
+    </table>
+    <p><em>Supported bureaus: <code>experian</code>, <code>equifax</code>, <code>transunion</code></em></p>
+
+    <h4>CyberSweep APIs (<code>/cybersweep/v1/*</code>) — 5 endpoints</h4>
+    <table>
+        <tr><th>Route</th><th>Method</th><th>Lambda</th><th>Description</th></tr>
+        <tr><td><code>/cybersweep/v1/idp/monitors/{accountId}</code></td><td>GET, POST</td><td>IDPMonitorLambda</td><td>List/create IDP monitors</td></tr>
+        <tr><td><code>/cybersweep/v1/idp/monitors/{accountId}/{monitorId}</code></td><td>GET, PATCH, DELETE</td><td>IDPMonitorLambda</td><td>Monitor CRUD</td></tr>
+        <tr><td><code>/cybersweep/v1/website/queue_automation</code></td><td>POST</td><td>WebsiteAutomationLambda</td><td>Queue website automation (Puppeteer)</td></tr>
     </table>
 
-    <h4>CyberSweep APIs (<code>/cybersweep/*</code>)</h4>
+    <h4>Vendor APIs (<code>/vendor/*</code>) — 9 endpoints</h4>
+    
+    <h5>Array v1 (Legacy)</h5>
     <table>
-        <tr><th>Route</th><th>Method</th><th>Lambda</th><th>Scopes Required</th><th>Description</th></tr>
-        <tr>
-            <td><code>/cybersweep/v1/idp/monitors</code></td>
-            <td>GET, POST</td>
-            <td>cybersweep-cdk-lambda-*</td>
-            <td><code>cybersweep:read</code>, <code>cybersweep:write</code></td>
-            <td>Identity protection monitors</td>
-        </tr>
-        <tr>
-            <td><code>/cybersweep/v1/idp/monitors/{id}</code></td>
-            <td>GET, DELETE</td>
-            <td>cybersweep-cdk-lambda-*</td>
-            <td><code>cybersweep:read</code>, <code>cybersweep:write</code></td>
-            <td>Monitor details/removal</td>
-        </tr>
+        <tr><th>Route</th><th>Method</th><th>Lambda</th><th>Description</th></tr>
+        <tr><td><code>/vendor/array/v1/report/credit-score-history</code></td><td>GET</td><td>ArrayReportLambda</td><td>Get score history</td></tr>
+        <tr><td><code>/vendor/array/v1/monitoring/enrollments</code></td><td>POST</td><td>ArrayMonitoringLambda</td><td>Create monitoring enrollment</td></tr>
     </table>
-
-    <h4>Vendor APIs (<code>/vendor/*</code>)</h4>
+    
+    <h5>Array v2 (Current)</h5>
     <table>
-        <tr><th>Route</th><th>Method</th><th>Lambda</th><th>Scopes Required</th><th>Description</th></tr>
-        <tr>
-            <td><code>/vendor/array/v2/user</code></td>
-            <td>GET, POST</td>
-            <td>vendor-cdk-lambda-*</td>
-            <td><code>vendor:array</code></td>
-            <td>Array user management</td>
-        </tr>
+        <tr><th>Route</th><th>Method</th><th>Lambda</th><th>Description</th></tr>
+        <tr><td><code>/vendor/array/v2/user</code></td><td>POST</td><td>ArrayUserLambda</td><td>Create Array user</td></tr>
+        <tr><td><code>/vendor/array/v2/user/{userId}/monitoring-enrollments</code></td><td>GET</td><td>ArrayUserLambda</td><td>Get user's enrollments</td></tr>
+        <tr><td><code>/vendor/array/v2/authenticate</code></td><td>PATCH</td><td>ArrayUserLambda</td><td>Authenticate user</td></tr>
+        <tr><td><code>/vendor/array/v2/report/order</code></td><td>POST</td><td>ArrayOrderCreditReportLambda</td><td>Order credit report</td></tr>
+        <tr><td><code>/vendor/array/v2/report/pdf</code></td><td>GET</td><td>ArrayRetrievePDFCreditReportLambda</td><td>Get PDF report</td></tr>
+        <tr><td><code>/vendor/array/v2/report/token</code></td><td>PUT</td><td>ArrayReportLambda</td><td>Refresh report token</td></tr>
+    </table>
         <tr>
             <td><code>/vendor/array/v2/report/*</code></td>
             <td>GET</td>
