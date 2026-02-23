@@ -1118,19 +1118,82 @@ rcm-serverless/
     </div>
 
     <h2>10) Migration Snapshot (Salesforce → RDS)</h2>
-    <p><em>✅ Verified via AWS scan 2026-02-22</em></p>
-    <h3>rcm-dsync footprint</h3>
+    <p><em>✅ Verified via AWS scan + <code>salesforce-data-sync</code> repo analysis 2026-02-22</em></p>
+    
+    <h3>10.1 Sync Orchestrator Architecture</h3>
+    <p>The <strong>Sync Orchestrator</strong> is an AWS Step Functions workflow that coordinates end-to-end Salesforce data synchronization:</p>
+    <pre style="background: #1a1a2e; padding: 1rem; border-radius: 6px; font-size: 0.8rem;">
+┌────────────────┐
+│   InitSync     │ → Creates sync_run record (Prisma ORM)
+└───────┬────────┘
+        ↓
+┌────────────────┐
+│  FetchBatch    │ → Queries Salesforce, computes batch definitions
+└───────┬────────┘
+        ↓
+┌────────────────┐     ┌─────────────────────┐
+│ EnqueueBatches │────▶│ EnqueueSingleBatch  │ (Map state, parallel)
+│ (if batches)   │     │ .waitForTaskToken   │
+└───────┬────────┘     │ SQS → PersistWorker │
+        │              │ → sendTaskSuccess   │
+        │              └─────────────────────┘
+        ↓
+┌────────────────┐
+│  FinalizeSync  │ → Updates sync_run status, triggers projections
+└───────┬────────┘
+        ↓
+┌────────────────┐
+│  SyncSucceeded │
+└────────────────┘
+
+Error Path: Handle*Failure → FailWorkflow → NotifyFailure → SyncFailed
+    </pre>
+    
+    <h3>10.2 Lambda Functions</h3>
+    <table>
+        <tr><th>Lambda</th><th>Purpose</th><th>Dev</th><th>Prod</th></tr>
+        <tr><td><code>init-sync</code></td><td>Creates sync_run record</td><td>✅</td><td class="flag">❌</td></tr>
+        <tr><td><code>fetch-batch</code></td><td>Queries SF, computes batches</td><td>✅</td><td class="flag">❌</td></tr>
+        <tr><td><code>persist-worker</code></td><td>Processes batches from SQS</td><td>✅</td><td class="flag">❌</td></tr>
+        <tr><td><code>finalize-sync</code></td><td>Updates status, triggers projections</td><td>✅</td><td class="flag">❌</td></tr>
+        <tr><td><code>projection-builder</code></td><td>Builds read models (DynamoDB)</td><td>✅</td><td class="flag">❌</td></tr>
+    </table>
+    
+    <h3>10.3 Infrastructure Components</h3>
     <table>
         <tr><th>Component</th><th>Dev (865942198740)</th><th>Prod (975050223773)</th></tr>
-        <tr><td>Step Functions</td><td>rcm-dsync-sync-orchestrator-*</td><td class="flag">❌ None</td></tr>
-        <tr><td>EventBridge</td><td>rcm-dsync-sync-schedule-*</td><td class="flag">❌ None</td></tr>
-        <tr><td>Lambdas</td><td><code>rcm-dsync-compute-dev-fetch-batch</code><br>+ others</td><td class="flag">❌ None</td></tr>
+        <tr><td>Step Functions</td><td><code>rcm-dsync-sync-orchestrator-dev</code></td><td class="flag">❌ None</td></tr>
+        <tr><td>EventBridge</td><td><code>rcm-dsync-sync-schedule-dev</code></td><td class="flag">❌ None</td></tr>
+        <tr><td>SQS Queues</td><td>Batch processing queues</td><td class="flag">❌ None</td></tr>
         <tr>
-            <td>RDS</td>
-            <td><code>rcm-dsync-data-main-rds-dev</code><br><code>rcm-dsync-data-main-rds-stg</code><br><code>rcm-dsync-data-main-rds-dev-alex</code><br><code>rcm-dsync-data-main-rds-dev-jim</code><br><code>rcm-dsync-data-main-rds-dev-wei</code><br>All Postgres, ✅ Not public</td>
+            <td>RDS (Postgres)</td>
+            <td>
+                <code>rcm-dsync-data-main-rds-dev</code><br>
+                <code>rcm-dsync-data-main-rds-stg</code><br>
+                <code>-dev-alex</code>, <code>-dev-jim</code>, <code>-dev-wei</code><br>
+                All ✅ Not public
+            </td>
             <td class="flag">❌ None</td>
         </tr>
+        <tr><td>DynamoDB</td><td>Projection tables (read models)</td><td class="flag">❌ None</td></tr>
     </table>
+    
+    <h3>10.4 Sync Types</h3>
+    <ul>
+        <li><strong>Full Sync:</strong> Complete data pull from Salesforce</li>
+        <li><strong>Delta Sync:</strong> Incremental changes since last sync</li>
+        <li><strong>Triggered By:</strong> <code>scheduled</code> (EventBridge), <code>manual</code>, <code>api</code></li>
+    </ul>
+    
+    <h3>10.5 Database Schema (Prisma ORM)</h3>
+    <p>Key tables in RDS:</p>
+    <ul>
+        <li><code>sync_runs</code> — Sync execution history</li>
+        <li><code>sync_batches</code> — Batch definitions with record_ids (JSONB)</li>
+        <li><code>accounts</code> — Salesforce Account mirror</li>
+        <li><code>contacts</code> — Salesforce Contact mirror</li>
+        <li><code>migrations</code> — 67 migration files tracked</li>
+    </ul>
     <div class="review-note security-warning">
         <strong>🟡 CONFIRMED (AWS scan 2026-02-22):</strong> No rcm-dsync resources exist in production account (975050223773).
         <br><br>
