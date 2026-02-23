@@ -1410,13 +1410,77 @@ User                API                  Lambda              Bureau API         
         </ul>
     </div>
 
-    <h2>8) Policy & Safety Model</h2>
-    <p><strong>Capabilities:</strong> <code>salesforce:read</code> vs <code>salesforce:read-write</code>, <code>client-dashboard:read</code> vs <code>client-dashboard:read-write</code></p>
-    <p><strong>Verification-Required:</strong> bureau block/unblock, verification, vendor enrollments</p>
-    <p><strong>Agent Question:</strong> Can I do this autonomously, or draft + ask approval?</p>
-    <div class="review-note">
-        <strong>REVIEW:</strong> Expand capability matrix. Add agent autonomy levels (autonomous / human-in-loop / draft-only). Add escalation paths. Define audit requirements.
-    </div>
+    <h2 id="section-8">8) Policy & Safety Model</h2>
+    <p>Authorization is scope-based via Keycloak. Each API endpoint requires specific scopes, and each role grants a set of scopes.</p>
+    
+    <h3>8.1 Scope Definitions</h3>
+    <table>
+        <tr><th>Scope</th><th>Grants</th><th>Typical Role</th></tr>
+        <tr><td><code>salesforce:read</code></td><td>Read Salesforce data via API</td><td>All authenticated users</td></tr>
+        <tr><td><code>salesforce:read-write</code></td><td>Write Salesforce data</td><td>Admins, Service accounts</td></tr>
+        <tr><td><code>client-dashboard:read</code></td><td>View client dashboard data</td><td>Partner contacts</td></tr>
+        <tr><td><code>client-dashboard:read-write</code></td><td>Modify client data</td><td>Partner admins</td></tr>
+        <tr><td><code>partner:read</code></td><td>View partner information</td><td>Partner contacts</td></tr>
+        <tr><td><code>partner:write</code></td><td>Modify partner settings</td><td>Partner admins</td></tr>
+        <tr><td><code>creditblock:read</code></td><td>View bureau status</td><td>Partner contacts</td></tr>
+        <tr><td><code>creditblock:write</code></td><td>Request freeze/unfreeze</td><td>Partner contacts (verified)</td></tr>
+        <tr><td><code>vendor:array</code></td><td>Array API operations</td><td>Service accounts</td></tr>
+        <tr><td><code>vendor:cybersweep</code></td><td>CyberSweep operations</td><td>Service accounts</td></tr>
+    </table>
+    
+    <h3>8.2 Verification Requirements</h3>
+    <p>Certain operations require additional verification:</p>
+    <table>
+        <tr><th>Operation</th><th>Verification</th><th>Reason</th></tr>
+        <tr><td>Bureau block/unblock</td><td>Vouched KYC</td><td>Prevents unauthorized freezes</td></tr>
+        <tr><td>Create partner contact</td><td>Email verification</td><td>Confirms identity</td></tr>
+        <tr><td>First credit report</td><td>Identity quiz (Array)</td><td>FCRA requirement</td></tr>
+        <tr><td>SSN changes</td><td>Admin approval</td><td>Fraud prevention</td></tr>
+    </table>
+    
+    <h3>8.3 Agent Autonomy Levels</h3>
+    <p>For AI/automated agents interacting with the system:</p>
+    <table>
+        <tr><th>Level</th><th>Description</th><th>Operations</th></tr>
+        <tr>
+            <td><strong>Autonomous</strong></td>
+            <td>Agent can execute without human approval</td>
+            <td>Read operations, status checks, report generation</td>
+        </tr>
+        <tr>
+            <td><strong>Human-in-Loop</strong></td>
+            <td>Agent prepares, human approves execution</td>
+            <td>Profile updates, case creation, monitoring enrollment</td>
+        </tr>
+        <tr>
+            <td><strong>Draft-Only</strong></td>
+            <td>Agent can draft but not submit</td>
+            <td>Bureau freeze/unfreeze, bulk operations, PII changes</td>
+        </tr>
+        <tr>
+            <td><strong>Prohibited</strong></td>
+            <td>Agent cannot perform</td>
+            <td>Delete operations, role changes, financial transactions</td>
+        </tr>
+    </table>
+    
+    <h3>8.4 Audit Requirements</h3>
+    <table>
+        <tr><th>Requirement</th><th>Implementation</th><th>Retention</th></tr>
+        <tr><td>API access logs</td><td>CloudWatch Logs, API Gateway</td><td>90 days (hot), 7 years (archive)</td></tr>
+        <tr><td>Data changes</td><td>Salesforce Field History, RDS audit tables</td><td>7 years</td></tr>
+        <tr><td>Login events</td><td>Keycloak event logs</td><td>2 years</td></tr>
+        <tr><td>Bureau operations</td><td>Case records in Salesforce</td><td>10 years (FCRA)</td></tr>
+        <tr><td>Credit reports</td><td>Encrypted storage, access logs</td><td>10 years (FCRA)</td></tr>
+    </table>
+    
+    <h3>8.5 Escalation Paths</h3>
+    <ul>
+        <li><strong>Technical issues:</strong> Support case → Engineering on-call → Platform team</li>
+        <li><strong>Client disputes:</strong> Support case → Client services → Legal (if needed)</li>
+        <li><strong>Security incidents:</strong> Immediate escalation to CTO + Security team</li>
+        <li><strong>Bureau errors:</strong> Support case → Bureau liaison → Direct bureau contact</li>
+    </ul>
     <div class="validation-note">
         <strong>VALIDATION — Section 8:</strong>
         <ul>
@@ -1430,19 +1494,127 @@ User                API                  Lambda              Bureau API         
         </ul>
     </div>
 
-    <h2>9) Implementation Bindings</h2>
+    <h2 id="section-9">9) Implementation Bindings</h2>
+    <p>Mapping from domain concepts to actual repositories and infrastructure.</p>
+    
+    <h3>9.1 Domain → Repository Mapping</h3>
     <table>
-        <tr><th>Domain</th><th>Repos</th><th>AWS Stacks</th></tr>
-        <tr><td>Identity</td><td>keycloak-v26, keycloak-theme-*</td><td>keycloak-development, keycloak-v16-release</td></tr>
-        <tr><td>Client/Partner</td><td>rcm-serverless, client-dashboard-api-v2</td><td>rcm-pipeline-*-stack-*</td></tr>
-        <tr><td>CreditBlock</td><td>cb-submodule</td><td>rcm-pipeline-creditblock-*</td></tr>
-        <tr><td>CyberSweep</td><td>cs-submodule</td><td>rcm-pipeline-cybersweep-*</td></tr>
-        <tr><td>Data Sync</td><td>salesforce-data-sync</td><td>rcm-dsync-*</td></tr>
-        <tr><td>Gobodo</td><td>gobodo-infrastructure</td><td>gobodo-infrastructure-rds-*</td></tr>
+        <tr><th>Domain</th><th>Primary Repo</th><th>Submodules/Related</th><th>Language</th></tr>
+        <tr>
+            <td>Identity & Auth</td>
+            <td><code>keycloak-v26</code></td>
+            <td><code>keycloak-theme-partner-portal</code></td>
+            <td>Keycloak config, Java</td>
+        </tr>
+        <tr>
+            <td>Core (Client, Partner, Array)</td>
+            <td><code>rcm-serverless</code></td>
+            <td><code>core-submodule</code>, <code>utils-submodule</code></td>
+            <td>TypeScript, Node.js</td>
+        </tr>
+        <tr>
+            <td>CreditBlock</td>
+            <td><code>rcm-serverless</code></td>
+            <td><code>cb-submodule</code></td>
+            <td>TypeScript</td>
+        </tr>
+        <tr>
+            <td>CyberSweep</td>
+            <td><code>rcm-serverless</code></td>
+            <td><code>cs-submodule</code></td>
+            <td>TypeScript</td>
+        </tr>
+        <tr>
+            <td>Vendor Integrations</td>
+            <td><code>rcm-serverless</code></td>
+            <td><code>vendor-submodule</code></td>
+            <td>TypeScript</td>
+        </tr>
+        <tr>
+            <td>Data Sync</td>
+            <td><code>salesforce-data-sync</code></td>
+            <td>—</td>
+            <td>TypeScript, Terraform</td>
+        </tr>
+        <tr>
+            <td>Gobodo</td>
+            <td><code>gobodo/gobodo-core</code></td>
+            <td><code>gobodo/gobodo-api-js-promise</code></td>
+            <td>Java (Spring Boot)</td>
+        </tr>
+        <tr>
+            <td>Product Hub UI</td>
+            <td><code>Regal-Product-Hub</code></td>
+            <td>—</td>
+            <td>React, TypeScript</td>
+        </tr>
+        <tr>
+            <td>Client Dashboard UI</td>
+            <td><code>RegalCreditB2BWebDashboard</code></td>
+            <td><code>client-dashboard-api-v2</code></td>
+            <td>React, TypeScript</td>
+        </tr>
     </table>
-    <div class="review-note">
-        <strong>REVIEW:</strong> Verify mappings are accurate. IMPROVE: Add deployment commands. Add CI/CD pipeline references.
-    </div>
+    
+    <h3>9.2 Domain → AWS Stack Mapping</h3>
+    <table>
+        <tr><th>Domain</th><th>CloudFormation Stacks</th><th>Key Resources</th></tr>
+        <tr>
+            <td>Identity</td>
+            <td><code>keycloak-development</code>, <code>keycloak-v16-release</code></td>
+            <td>Aurora MySQL, ALB, ECS</td>
+        </tr>
+        <tr>
+            <td>Core APIs</td>
+            <td><code>rcm-core-cdk-stack-*</code>, <code>rcm-pipeline-core-*</code></td>
+            <td>API Gateway, 100+ Lambdas</td>
+        </tr>
+        <tr>
+            <td>CreditBlock</td>
+            <td><code>rcm-creditblock-cdk-stack-*</code>, <code>rcm-pipeline-creditblock-*</code></td>
+            <td>API Gateway, ~30 Lambdas</td>
+        </tr>
+        <tr>
+            <td>CyberSweep</td>
+            <td><code>rcm-cybersweep-cdk-stack-*</code>, <code>rcm-pipeline-cybersweep-*</code></td>
+            <td>API Gateway, ~40 Lambdas, Puppeteer layer</td>
+        </tr>
+        <tr>
+            <td>Data Sync</td>
+            <td><code>rcm-dsync-*</code> (dev only)</td>
+            <td>Step Functions, RDS, SQS, EventBridge</td>
+        </tr>
+        <tr>
+            <td>Gobodo</td>
+            <td><code>gobodo-*</code>, <code>rcm-gobodo-neo4j-stg</code></td>
+            <td>RDS Postgres, ElastiCache, Elastic Beanstalk</td>
+        </tr>
+        <tr>
+            <td>Front-ends</td>
+            <td><code>amplify-*</code>, <code>client-dashboard-pipeline-*</code></td>
+            <td>Amplify hosting, CloudFront</td>
+        </tr>
+    </table>
+    
+    <h3>9.3 Deployment Commands</h3>
+    <pre style="background: var(--surface); padding: 1rem; border-radius: 6px; font-size: 0.8rem;">
+# Deploy rcm-serverless (CDK)
+cd rcm-serverless
+npm install
+npm run cdk deploy -- --profile regal-dev
+
+# Deploy salesforce-data-sync (Terraform)
+cd salesforce-data-sync/infra/envs/dev
+terraform init
+terraform plan
+terraform apply
+
+# Deploy Keycloak theme
+cd keycloak-theme-partner-portal
+./deploy.sh dev
+
+# Amplify apps deploy automatically on git push
+    </pre>
     <div class="validation-note">
         <strong>VALIDATION — Section 9:</strong>
         <ul>
