@@ -1728,16 +1728,103 @@ Error Path: Handle*Failure → FailWorkflow → NotifyFailure → SyncFailed
         </ul>
     </div>
 
-    <h2>11) Output Formats</h2>
-    <ul>
-        <li><strong>Entity schemas:</strong> JSON Schema definitions</li>
-        <li><strong>Relationships:</strong> Graph edges (see §5)</li>
-        <li><strong>Events:</strong> Catalog (see §7)</li>
-        <li><strong>Storage:</strong> Versioned markdown + <code>ontology-map.aws.yaml</code></li>
-    </ul>
-    <div class="review-note">
-        <strong>REVIEW:</strong> Define actual JSON/YAML schemas. Create OpenAPI spec for agents. Add example payloads.
+    <h2 id="section-11">11) Output Formats & Machine-Readable Specs</h2>
+    
+    <h3>11.1 OpenAPI Specifications</h3>
+    <table>
+        <tr><th>API</th><th>Spec Location</th><th>Format</th></tr>
+        <tr>
+            <td>RCM Serverless</td>
+            <td><code>rcm-serverless/swagger.yaml</code></td>
+            <td>OpenAPI 3.0</td>
+        </tr>
+        <tr>
+            <td>Gobodo</td>
+            <td><code>gobodo-api-js-promise/docs/</code></td>
+            <td>OpenAPI 3.0 (731 schemas)</td>
+        </tr>
+    </table>
+    
+    <h3>11.2 Entity Schema Sources</h3>
+    <table>
+        <tr><th>Entity Type</th><th>Source</th><th>Location</th></tr>
+        <tr><td>API Request/Response</td><td>OpenAPI schemas</td><td><code>swagger.yaml#/components/schemas</code></td></tr>
+        <tr><td>RDS Tables</td><td>SQL migrations</td><td><code>salesforce-data-sync/services/migrations/</code></td></tr>
+        <tr><td>Salesforce Objects</td><td>SOQL metadata</td><td>Salesforce Setup → Object Manager</td></tr>
+        <tr><td>Gobodo Objects</td><td>Graph schema API</td><td><code>GET /schema/{id}/objecttypes</code></td></tr>
+    </table>
+    
+    <h3>11.3 Key Schema Examples</h3>
+    <details>
+    <summary><strong>Client Schema</strong> (from swagger.yaml)</summary>
+    <div>
+    <pre>{
+  "id": "string",
+  "firstName": "string",
+  "lastName": "string",
+  "middleName": "string",
+  "personBirthdate": "string",
+  "currentAddress": "string",
+  "previousAddress": "string",
+  "aliases": [{ "name": "string", "active": boolean }],
+  "addresses": [{
+    "street": "string",
+    "city": "string",
+    "state": "string",
+    "postalCode": "string",
+    "countryCode": "string"
+  }],
+  "phone": ["string"],
+  "email": ["string"],
+  "ssn": "string",
+  "personMobile": "string",
+  "personEmail": "string"
+}</pre>
     </div>
+    </details>
+    
+    <details>
+    <summary><strong>BureauCase Schema</strong> (from swagger.yaml)</summary>
+    <div>
+    <pre>{
+  "CaseId": "string",
+  "AccountId": "string",
+  "CaseOwner": "string",
+  "CaseReason": "string",
+  "ReblockDate": "string",
+  "RecordTypeId": "string",
+  "Status": "string"
+}</pre>
+    </div>
+    </details>
+    
+    <details>
+    <summary><strong>Partner Schema</strong> (from swagger.yaml)</summary>
+    <div>
+    <pre>{
+  "id": "string",
+  "accountName": "string",
+  "priceBookId": "string",
+  "phone": "string",
+  "website": "string",
+  "billingStreet": "string",
+  "billingCity": "string",
+  "billingState": "string",
+  "billingPostalCode": "string",
+  "billingCountry": "string"
+}</pre>
+    </div>
+    </details>
+    
+    <h3>11.4 Documentation Artifacts</h3>
+    <table>
+        <tr><th>Artifact</th><th>Location</th><th>Purpose</th></tr>
+        <tr><td>This Ontology</td><td><a href="https://magnusregal.github.io/regal-ontology-preview/">GitHub Pages</a></td><td>Human-readable reference</td></tr>
+        <tr><td>API Endpoints Detail</td><td><a href="api-endpoints-detail.html">api-endpoints-detail.html</a></td><td>Full endpoint reference</td></tr>
+        <tr><td>Gobodo Reference</td><td><a href="gobodo-reference.html">gobodo-reference.html</a></td><td>Gobodo platform docs</td></tr>
+        <tr><td>AWS Verification</td><td><a href="verification-report.html">verification-report.html</a></td><td>Infrastructure audit</td></tr>
+        <tr><td>Git Comparison</td><td><a href="aws-git-comparison.html">aws-git-comparison.html</a></td><td>Repo ↔ AWS mapping</td></tr>
+    </table>
     <div class="validation-note">
         <strong>VALIDATION — Section 11:</strong>
         <ul>
@@ -1752,20 +1839,45 @@ Error Path: Handle*Failure → FailWorkflow → NotifyFailure → SyncFailed
 
     <hr>
 
-    <h2>📋 Review Summary</h2>
+    <h2>Review Summary</h2>
+    <p><em>Last reviewed: 2026-02-22 | Verified against AWS (dev + prod) and GitHub repos</em></p>
+    
     <table class="summary-table">
-        <tr><th>Section</th><th>Priority</th><th>Action</th></tr>
-        <tr><td>1) Purpose</td><td class="priority-medium">Medium</td><td>Add success criteria, version governance</td></tr>
-        <tr><td>2) Domain Boundaries</td><td class="priority-medium">Medium</td><td>Add team ownership, UK contexts</td></tr>
-        <tr><td>3) System Landscape</td><td class="priority-high">HIGH</td><td>Fresh AWS scan, FIX Gobodo security</td></tr>
-        <tr><td>4) API Surface</td><td class="priority-medium">Medium</td><td>Add auth requirements per endpoint</td></tr>
-        <tr><td>5) Entity Model</td><td class="priority-medium">Medium</td><td>Add field definitions from schemas</td></tr>
-        <tr><td>6) Projections</td><td class="priority-medium">Medium</td><td>Define dashboard read models</td></tr>
-        <tr><td>7) Commands/Events</td><td class="priority-medium">Medium</td><td>Add sequence diagrams, Commands section</td></tr>
-        <tr><td>8) Policy & Safety</td><td class="priority-high">HIGH</td><td>Expand autonomy boundaries</td></tr>
-        <tr><td>9) Implementation</td><td class="priority-low">Low</td><td>Add deployment commands</td></tr>
-        <tr><td>10) Migration</td><td class="priority-high">HIGH</td><td>Clarify production status</td></tr>
-        <tr><td>11) Output Formats</td><td class="priority-high">HIGH</td><td>Create machine-readable schemas</td></tr>
+        <tr><th>Section</th><th>Status</th><th>Notes</th></tr>
+        <tr><td>1) Purpose</td><td class="priority-low">Complete</td><td>Core systems, data residency, success criteria documented</td></tr>
+        <tr><td>2) Domain Boundaries</td><td class="priority-low">Complete</td><td>9 contexts, owner assignments, dependency diagram</td></tr>
+        <tr><td>3) System Landscape</td><td class="priority-medium">Verified</td><td>AWS scan complete. <strong>ACTION: Fix Gobodo security</strong></td></tr>
+        <tr><td>4) API Surface</td><td class="priority-low">Complete</td><td>48 endpoints documented from swagger.yaml, collapsible</td></tr>
+        <tr><td>5) Entity Model</td><td class="priority-low">Complete</td><td>14 entities with field definitions, ER diagram</td></tr>
+        <tr><td>6) Projections</td><td class="priority-low">Complete</td><td>67 RDS tables documented, projection architecture</td></tr>
+        <tr><td>7) Commands/Events</td><td class="priority-low">Complete</td><td>Commands added, events expanded, sequence diagram</td></tr>
+        <tr><td>8) Policy & Safety</td><td class="priority-low">Complete</td><td>Scopes, verification, agent autonomy, audit requirements</td></tr>
+        <tr><td>9) Implementation</td><td class="priority-low">Complete</td><td>Repo mappings, stack mappings, deployment commands</td></tr>
+        <tr><td>10) Migration</td><td class="priority-medium">Verified</td><td>Architecture documented. <strong>ACTION: Deploy to prod</strong></td></tr>
+        <tr><td>11) Output Formats</td><td class="priority-low">Complete</td><td>OpenAPI refs, schema examples, documentation links</td></tr>
+    </table>
+    
+    <h3>Outstanding Actions</h3>
+    <ol>
+        <li><strong class="flag">CRITICAL:</strong> Fix Gobodo DB security group (restrict from 0.0.0.0/0)</li>
+        <li><strong>High:</strong> Deploy rcm-dsync to production account</li>
+        <li><strong>Medium:</strong> Finalize UK expansion infrastructure (eu-west-2)</li>
+        <li><strong>Low:</strong> Build DynamoDB projections for faster reads</li>
+    </ol>
+
+    <h2>Changelog</h2>
+    <table>
+        <tr><th>Date</th><th>Change</th></tr>
+        <tr><td>2026-02-22</td><td>Initial AWS verification scan (dev + prod accounts)</td></tr>
+        <tr><td>2026-02-22</td><td>Added Gobodo Platform Reference (80+ APIs, 731 schemas)</td></tr>
+        <tr><td>2026-02-22</td><td>Expanded Section 4 with 48 endpoints from swagger.yaml</td></tr>
+        <tr><td>2026-02-22</td><td>Expanded Section 6 with 67 RDS tables from migrations</td></tr>
+        <tr><td>2026-02-22</td><td>Added Section 7 commands and event flow diagram</td></tr>
+        <tr><td>2026-02-22</td><td>Added Section 8 scopes, agent autonomy levels, audit requirements</td></tr>
+        <tr><td>2026-02-22</td><td>Added Section 9 deployment commands</td></tr>
+        <tr><td>2026-02-22</td><td>Added Section 11 schema examples and doc artifacts</td></tr>
+        <tr><td>2026-02-22</td><td>Confirmed Gobodo security issue (SG open to 0.0.0.0/0)</td></tr>
+        <tr><td>2026-02-22</td><td>Confirmed no rcm-dsync in production account</td></tr>
     </table>
 
 </main>
