@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gobodo Platform Reference — Regal</title>
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --surface: #16213e;
+            --text: #eee;
+            --accent: #0f3460;
+            --red: #e94560;
+            --green: #4ecca3;
+            --yellow: #ffc107;
+            --blue: #00d9ff;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        h1 { color: var(--blue); margin-bottom: 0.5rem; }
+        h2 { color: var(--green); margin: 2rem 0 1rem; border-bottom: 1px solid var(--accent); padding-bottom: 0.5rem; }
+        h3 { color: var(--text); margin: 1.5rem 0 0.75rem; }
+        h4 { color: var(--blue); margin: 1rem 0 0.5rem; font-size: 0.95rem; }
+        a { color: var(--blue); }
+        .meta { color: #888; margin-bottom: 2rem; font-size: 0.9rem; }
+        .back-link { margin-bottom: 1rem; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85rem; }
+        th, td { padding: 0.5rem; text-align: left; border: 1px solid var(--accent); }
+        th { background: var(--accent); color: var(--blue); }
+        code { background: var(--accent); padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; }
+        pre { background: var(--surface); padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 0.8rem; margin: 0.5rem 0; }
+        details { margin: 0.5rem 0; }
+        summary { 
+            cursor: pointer; 
+            padding: 0.75rem; 
+            background: var(--surface); 
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        summary:hover { background: var(--accent); }
+        details[open] summary { border-radius: 4px 4px 0 0; }
+        details > div { 
+            padding: 1rem; 
+            background: rgba(255,255,255,0.02); 
+            border: 1px solid var(--accent);
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+        }
+        .alert { padding: 1rem; border-radius: 6px; margin: 1rem 0; }
+        .alert-critical { background: rgba(233, 69, 96, 0.2); border-left: 4px solid var(--red); }
+        .alert-info { background: rgba(78, 204, 163, 0.15); border-left: 4px solid var(--green); }
+        .method { 
+            display: inline-block; 
+            padding: 0.15rem 0.4rem; 
+            border-radius: 3px; 
+            font-size: 0.7rem; 
+            font-weight: bold;
+            margin-right: 0.3rem;
+        }
+        .method-get { background: var(--green); color: #000; }
+        .method-post { background: var(--blue); color: #000; }
+        .method-put { background: #9b59b6; color: #fff; }
+        .method-delete { background: var(--red); color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="back-link"><a href="index.html">← Back to Ontology</a></div>
+    
+    <h1>Gobodo Platform Reference</h1>
+    <div class="meta">
+        API Version: 0.1.171 | Base URL: <code>https://test.api.gobodo.io</code> | 
+        Source: <code>gobodo/gobodo-core</code> (Java), <code>gobodo/gobodo-api-js-promise</code>
+    </div>
+
+    <h2>Overview</h2>
+    <p>Gobodo is a dynamic data modeling platform that provides:</p>
+    <ul>
+        <li><strong>Graph-based data model</strong> — Objects, relationships, and actions in a flexible graph structure</li>
+        <li><strong>Dynamic schemas</strong> — Define object types and fields without code deployments</li>
+        <li><strong>Custom fields</strong> — Add fields to any object type at runtime</li>
+        <li><strong>Relationship types</strong> — Define typed relationships between objects</li>
+        <li><strong>Permission system</strong> — Fine-grained access control on objects and fields</li>
+        <li><strong>Built-in caching</strong> — Configurable cache with groups and invalidation</li>
+    </ul>
+    
+    <p>For Regal's Product Hub, Gobodo replaces Salesforce's custom object/field infrastructure with a more flexible, self-service model.</p>
+
+    <div class="alert alert-critical">
+        <strong>Security Issue:</strong> The Gobodo staging database (<code>rcm-gobodo-db-stg</code>) is currently publicly accessible. 
+        See <a href="verification-report.html">Verification Report</a> for remediation steps.
+    </div>
+
+    <h2>Core Concepts</h2>
+    
+    <h3>Graph Structure</h3>
+    <pre>
+┌─────────────────────────────────────────────────────────────────┐
+│                           GRAPH                                  │
+│  ┌─────────┐    relationship    ┌─────────┐                     │
+│  │ Object  │ ─────────────────▶ │ Object  │                     │
+│  │ (type)  │                    │ (type)  │                     │
+│  └─────────┘                    └─────────┘                     │
+│      │                              │                           │
+│      │ action                       │ action                    │
+│      ▼                              ▼                           │
+│  ┌─────────┐                    ┌─────────┐                     │
+│  │ Action  │                    │ Action  │                     │
+│  └─────────┘                    └─────────┘                     │
+└─────────────────────────────────────────────────────────────────┘
+
+Schema defines: ObjectTypes, RelationshipTypes, ActionTypes, Fields
+    </pre>
+
+    <h3>Key Entities</h3>
+    <table>
+        <tr><th>Entity</th><th>Description</th><th>Salesforce Equivalent</th></tr>
+        <tr><td><strong>Graph</strong></td><td>Container for objects and schemas</td><td>Organization</td></tr>
+        <tr><td><strong>Schema</strong></td><td>Collection of type definitions</td><td>Managed Package</td></tr>
+        <tr><td><strong>ObjectType</strong></td><td>Definition of an object kind</td><td>Custom Object</td></tr>
+        <tr><td><strong>Object</strong></td><td>Instance of an ObjectType</td><td>Record</td></tr>
+        <tr><td><strong>Field</strong></td><td>Property definition on a type</td><td>Custom Field</td></tr>
+        <tr><td><strong>RelationshipType</strong></td><td>Definition of a relationship kind</td><td>Lookup/Master-Detail</td></tr>
+        <tr><td><strong>Relationship</strong></td><td>Instance linking two objects</td><td>Related Record</td></tr>
+        <tr><td><strong>ActionType</strong></td><td>Definition of an action kind</td><td>Flow/Process Builder</td></tr>
+        <tr><td><strong>Action</strong></td><td>Instance of an action on an object</td><td>Flow Instance</td></tr>
+    </table>
+
+    <h2>API Reference</h2>
+    <p>Gobodo exposes 80+ API classes with 731 schemas. Key APIs for Product Hub:</p>
+
+    <details>
+        <summary><strong>GraphObjectsApi</strong> — CRUD operations on objects</summary>
+        <div>
+            <table>
+                <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+                <tr><td><span class="method method-post">POST</span></td><td><code>/object</code></td><td>Create object</td></tr>
+                <tr><td><span class="method method-post">POST</span></td><td><code>/object/batch</code></td><td>Create objects (batch)</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/object/{id}</code></td><td>Get object by ID</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/object/{key}</code></td><td>Get object by key</td></tr>
+                <tr><td><span class="method method-put">PUT</span></td><td><code>/object/{id}</code></td><td>Update object</td></tr>
+                <tr><td><span class="method method-put">PUT</span></td><td><code>/object/upsert</code></td><td>Upsert object</td></tr>
+                <tr><td><span class="method method-put">PUT</span></td><td><code>/object/upsert/batch</code></td><td>Upsert objects (batch)</td></tr>
+                <tr><td><span class="method method-delete">DELETE</span></td><td><code>/object/{id}</code></td><td>Delete object</td></tr>
+                <tr><td><span class="method method-put">PUT</span></td><td><code>/object/{id}/properties</code></td><td>Set multiple properties</td></tr>
+                <tr><td><span class="method method-put">PUT</span></td><td><code>/object/{id}/properties/{prop}</code></td><td>Set single property</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/search/graphobjects</code></td><td>Search objects</td></tr>
+            </table>
+            
+            <h4>Relationships</h4>
+            <table>
+                <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+                <tr><td><span class="method method-post">POST</span></td><td><code>/object/{id}/relationship</code></td><td>Create relationship</td></tr>
+                <tr><td><span class="method method-post">POST</span></td><td><code>/object/{id}/relationships</code></td><td>Create multiple relationships</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/object/{id}/relationships/all</code></td><td>Get all relationships</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/object/{id}/relationships/in</code></td><td>Get incoming relationships</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/object/{id}/relationships/out</code></td><td>Get outgoing relationships</td></tr>
+                <tr><td><span class="method method-put">PUT</span></td><td><code>/object/{id}/relationship/upsert</code></td><td>Upsert relationship</td></tr>
+            </table>
+        </div>
+    </details>
+
+    <details>
+        <summary><strong>GraphObjectTypesApi</strong> — Schema/type management</summary>
+        <div>
+            <table>
+                <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+                <tr><td><span class="method method-post">POST</span></td><td><code>/objecttype</code></td><td>Create object type</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/objecttype/{id}</code></td><td>Get object type by ID</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/objecttype/all</code></td><td>Get all object types</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/objecttype/mine</code></td><td>Get my object types</td></tr>
+                <tr><td><span class="method method-put">PUT</span></td><td><code>/objecttype/{id}</code></td><td>Update object type</td></tr>
+                <tr><td><span class="method method-put">PUT</span></td><td><code>/objecttype/upsert</code></td><td>Upsert object type</td></tr>
+                <tr><td><span class="method method-delete">DELETE</span></td><td><code>/objecttype/{id}</code></td><td>Delete object type</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/objecttype/{id}/fields</code></td><td>Get fields for type</td></tr>
+                <tr><td><span class="method method-post">POST</span></td><td><code>/objecttype/{id}/fields</code></td><td>Create field for type</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/objecttype/{id}/relationshiptypes/in</code></td><td>Get incoming rel types</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/objecttype/{id}/relationshiptypes/out</code></td><td>Get outgoing rel types</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/search/objecttypes</code></td><td>Search object types</td></tr>
+            </table>
+        </div>
+    </details>
+
+    <details>
+        <summary><strong>FieldsApi</strong> — Field management</summary>
+        <div>
+            <table>
+                <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+                <tr><td><span class="method method-post">POST</span></td><td><code>/fields</code></td><td>Create fields</td></tr>
+                <tr><td><span class="method method-post">POST</span></td><td><code>/fields/{objecttype}/{objectid}</code></td><td>Create field in container</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/fields/{fieldid}</code></td><td>Get field by ID</td></tr>
+                <tr><td><span class="method method-put">PUT</span></td><td><code>/fields/{fieldid}</code></td><td>Update field</td></tr>
+                <tr><td><span class="method method-delete">DELETE</span></td><td><code>/fields/{fieldid}</code></td><td>Delete field</td></tr>
+                <tr><td><span class="method method-post">POST</span></td><td><code>/objecttype/{id}/fields</code></td><td>Create field for object type</td></tr>
+                <tr><td><span class="method method-post">POST</span></td><td><code>/relationshiptype/{id}/fields</code></td><td>Create field for rel type</td></tr>
+                <tr><td><span class="method method-post">POST</span></td><td><code>/actiontype/{id}/fields</code></td><td>Create field for action type</td></tr>
+            </table>
+        </div>
+    </details>
+
+    <details>
+        <summary><strong>GraphSchemasApi</strong> — Schema containers</summary>
+        <div>
+            <table>
+                <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+                <tr><td><span class="method method-post">POST</span></td><td><code>/schema</code></td><td>Create schema</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/schema</code></td><td>Get all schemas</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/schema/{id}</code></td><td>Get schema by ID</td></tr>
+                <tr><td><span class="method method-post">POST</span></td><td><code>/schema/{id}</code></td><td>Update schema</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/schema/{id}/objecttypes</code></td><td>Get object types in schema</td></tr>
+                <tr><td><span class="method method-put">PUT</span></td><td><code>/schema/{id}/objecttypes</code></td><td>Add object types to schema</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/schema/{id}/relationshiptypes</code></td><td>Get rel types in schema</td></tr>
+                <tr><td><span class="method method-put">PUT</span></td><td><code>/schema/{id}/relationshiptypes</code></td><td>Add rel types to schema</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/schema/{id}/actiontypes</code></td><td>Get action types in schema</td></tr>
+            </table>
+        </div>
+    </details>
+
+    <details>
+        <summary><strong>GraphRelationshipTypesApi</strong> — Relationship type management</summary>
+        <div>
+            <table>
+                <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+                <tr><td><span class="method method-post">POST</span></td><td><code>/relationshiptype</code></td><td>Create relationship type</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/relationshiptype/{id}</code></td><td>Get rel type by ID</td></tr>
+                <tr><td><span class="method method-put">PUT</span></td><td><code>/relationshiptype/{id}</code></td><td>Update rel type</td></tr>
+                <tr><td><span class="method method-delete">DELETE</span></td><td><code>/relationshiptype/{id}</code></td><td>Delete rel type</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/relationshiptype/{id}/startobjecttypes</code></td><td>Get valid start types</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/relationshiptype/{id}/endobjecttypes</code></td><td>Get valid end types</td></tr>
+            </table>
+        </div>
+    </details>
+
+    <details>
+        <summary><strong>GraphTraversalApi</strong> — Graph queries</summary>
+        <div>
+            <table>
+                <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/graph/{id}/objects</code></td><td>Get objects in graph</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/graph/{id}/objects/type/{type}</code></td><td>Get objects by type</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/graph/{id}/objects/tag/{tag}</code></td><td>Get objects by tag</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/graph/{id}/schemas</code></td><td>Get schemas in graph</td></tr>
+                <tr><td><span class="method method-get">GET</span></td><td><code>/graph/{id}/objecttypes</code></td><td>Get object types in graph</td></tr>
+            </table>
+        </div>
+    </details>
+
+    <h2>Authentication</h2>
+    <p>Gobodo uses two authentication methods:</p>
+    <table>
+        <tr><th>Method</th><th>Header</th><th>Description</th></tr>
+        <tr>
+            <td><strong>NexusGraphAPIAuth</strong></td>
+            <td><code>SWAuthorization: &lt;token&gt;</code></td>
+            <td>User session token (from Keycloak)</td>
+        </tr>
+        <tr>
+            <td><strong>NexusGraphAPIKey</strong></td>
+            <td><code>apiKey: &lt;key&gt;</code></td>
+            <td>Service account API key</td>
+        </tr>
+    </table>
+
+    <h2>Caching</h2>
+    <p>All endpoints support request-level cache control:</p>
+    <table>
+        <tr><th>Header</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>cacheduration</code></td><td>number</td><td>How long to cache (seconds)</td></tr>
+        <tr><td><code>cachekey</code></td><td>string[]</td><td>Cache keys for this response</td></tr>
+        <tr><td><code>cachegroup</code></td><td>string[]</td><td>Cache groups to associate</td></tr>
+        <tr><td><code>cachescope</code></td><td>string</td><td>Scope: user, session, global</td></tr>
+        <tr><td><code>invalidationkeys</code></td><td>object[]</td><td>Keys to invalidate on mutation</td></tr>
+    </table>
+
+    <h2>AWS Infrastructure</h2>
+    <table>
+        <tr><th>Component</th><th>Dev</th><th>Prod</th></tr>
+        <tr>
+            <td>Database</td>
+            <td><code>rcm-gobodo-db-stg</code> (Postgres)</td>
+            <td>Not deployed</td>
+        </tr>
+        <tr>
+            <td>Neo4j</td>
+            <td><code>rcm-gobodo-neo4j-stg</code></td>
+            <td>Not deployed</td>
+        </tr>
+        <tr>
+            <td>Cache API</td>
+            <td><code>gobodo-cache-infra-dev</code></td>
+            <td>Not deployed</td>
+        </tr>
+        <tr>
+            <td>Lambdas</td>
+            <td><code>GobodoCacheLambda-Dev</code>, <code>CacheManagementLambda-Dev</code>, <code>StoreCacheLambda-Dev</code></td>
+            <td>Not deployed</td>
+        </tr>
+        <tr>
+            <td>Elastic Beanstalk</td>
+            <td><code>gobodo-eb-gobodo-staging</code></td>
+            <td>Not deployed</td>
+        </tr>
+    </table>
+
+    <h2>Source Repositories</h2>
+    <table>
+        <tr><th>Repository</th><th>Language</th><th>Description</th></tr>
+        <tr>
+            <td><a href="https://github.com/gobodo/gobodo-core" target="_blank">gobodo/gobodo-core</a></td>
+            <td>Java</td>
+            <td>Core Gobodo engine (Spring Boot)</td>
+        </tr>
+        <tr>
+            <td><a href="https://github.com/gobodo/gobodo-api-js-promise" target="_blank">gobodo/gobodo-api-js-promise</a></td>
+            <td>JavaScript</td>
+            <td>Auto-generated JS client (OpenAPI)</td>
+        </tr>
+    </table>
+
+    <h2>Integration with Product Hub</h2>
+    <p>Product Hub uses Gobodo to provide Salesforce-like customization without Salesforce:</p>
+    
+    <h3>Current Regal Object Types (likely)</h3>
+    <ul>
+        <li><strong>Client</strong> — Person account equivalent</li>
+        <li><strong>Partner</strong> — Partner account</li>
+        <li><strong>Contact</strong> — Partner contacts</li>
+        <li><strong>Enrollment</strong> — Service enrollments</li>
+        <li><strong>Case</strong> — Support cases</li>
+        <li><strong>BureauCase</strong> — Credit freeze requests</li>
+    </ul>
+
+    <h3>Product Hub Features Powered by Gobodo</h3>
+    <ul>
+        <li><strong>Role Builder</strong> — Uses Gobodo permissions API</li>
+        <li><strong>Object Manager</strong> — Uses GraphObjectTypesApi</li>
+        <li><strong>Page Layout Builder</strong> — Uses FieldsApi + custom metadata</li>
+        <li><strong>Workflow Builder</strong> — Uses GraphActionsApi + ActionTypesApi</li>
+    </ul>
+
+    <div class="alert alert-info">
+        <strong>Note:</strong> Gobodo is a third-party platform, not built by Regal. 
+        The integration is primarily for dynamic data modeling in Product Hub.
+    </div>
+
+</body>
+</html>
