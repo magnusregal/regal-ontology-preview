@@ -643,40 +643,304 @@
     </div>
 
     <h2>5) Entity Model (Canonical)</h2>
+    <p>Definitive entity definitions with field-level detail. Sources: Salesforce objects, RDS tables, Keycloak attributes, vendor APIs.</p>
     
     <h3>5.1 Identity & Access</h3>
+    
+    <h4>UserIdentity</h4>
+    <p><em>Source: Keycloak</em> — Authenticated user identity, links to either Client or PartnerContact</p>
     <table>
-        <tr><th>Entity</th><th>Description</th></tr>
-        <tr><td>UserIdentity</td><td>Keycloak user; links to Client or PartnerContact</td></tr>
-        <tr><td>Device</td><td>deviceId, userId, deviceType, deviceToken</td></tr>
+        <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+        <tr><td><code>id</code></td><td>UUID</td><td>✓</td><td>Keycloak user ID (primary key)</td></tr>
+        <tr><td><code>email</code></td><td>String</td><td>✓</td><td>Email address (unique, used for login)</td></tr>
+        <tr><td><code>emailVerified</code></td><td>Boolean</td><td>✓</td><td>Email verification status</td></tr>
+        <tr><td><code>firstName</code></td><td>String</td><td></td><td>First name</td></tr>
+        <tr><td><code>lastName</code></td><td>String</td><td></td><td>Last name</td></tr>
+        <tr><td><code>enabled</code></td><td>Boolean</td><td>✓</td><td>Account active status</td></tr>
+        <tr><td><code>createdTimestamp</code></td><td>Long</td><td>✓</td><td>Account creation timestamp (epoch ms)</td></tr>
+        <tr><td><code>attributes.salesforceId</code></td><td>String</td><td></td><td>Link to Salesforce Person Account or Contact</td></tr>
+        <tr><td><code>attributes.userType</code></td><td>Enum</td><td></td><td><code>client</code> | <code>partner_contact</code> | <code>admin</code></td></tr>
+        <tr><td><code>realmRoles</code></td><td>String[]</td><td></td><td>Assigned realm roles</td></tr>
+        <tr><td><code>clientRoles</code></td><td>Object</td><td></td><td>Client-specific role mappings</td></tr>
+    </table>
+
+    <h4>Device</h4>
+    <p><em>Source: RCM API</em> — Mobile device registration for push notifications</p>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+        <tr><td><code>deviceId</code></td><td>UUID</td><td>✓</td><td>Unique device identifier (primary key)</td></tr>
+        <tr><td><code>userId</code></td><td>UUID</td><td>✓</td><td>FK → UserIdentity.id</td></tr>
+        <tr><td><code>deviceType</code></td><td>Enum</td><td>✓</td><td><code>ios</code> | <code>android</code> | <code>web</code></td></tr>
+        <tr><td><code>deviceToken</code></td><td>String</td><td>✓</td><td>Push notification token (APNs/FCM)</td></tr>
+        <tr><td><code>deviceName</code></td><td>String</td><td></td><td>User-friendly device name</td></tr>
+        <tr><td><code>osVersion</code></td><td>String</td><td></td><td>Operating system version</td></tr>
+        <tr><td><code>appVersion</code></td><td>String</td><td></td><td>App version installed</td></tr>
+        <tr><td><code>status</code></td><td>Enum</td><td>✓</td><td><code>active</code> | <code>inactive</code> | <code>retired</code></td></tr>
+        <tr><td><code>registeredAt</code></td><td>DateTime</td><td>✓</td><td>Registration timestamp</td></tr>
+        <tr><td><code>lastActiveAt</code></td><td>DateTime</td><td></td><td>Last activity timestamp</td></tr>
     </table>
 
     <h3>5.2 Customer & Relationships</h3>
+
+    <h4>Client (Person Account)</h4>
+    <p><em>Source: Salesforce Person Account → RDS sync</em> — End customer who uses Regal services</p>
     <table>
-        <tr><th>Entity</th><th>Relationships</th></tr>
-        <tr><td>Client (Person Account)</td><td>→ FamilyMembers, Notifications, Enrollments, Cases</td></tr>
-        <tr><td>FamilyMember</td><td>Spouse | Dependent (for eligibility/pricing)</td></tr>
-        <tr><td>Partner (Partner Account)</td><td>→ Pricebook, PartnerContacts</td></tr>
-        <tr><td>PartnerContact</td><td>→ Clients via ClientVisibilityLink</td></tr>
+        <tr><th>Field</th><th>Type</th><th>Required</th><th>SF Field</th><th>Description</th></tr>
+        <tr><td><code>id</code></td><td>String(18)</td><td>✓</td><td><code>Id</code></td><td>Salesforce record ID (primary key)</td></tr>
+        <tr><td><code>firstName</code></td><td>String</td><td>✓</td><td><code>FirstName</code></td><td>Legal first name</td></tr>
+        <tr><td><code>lastName</code></td><td>String</td><td>✓</td><td><code>LastName</code></td><td>Legal last name</td></tr>
+        <tr><td><code>email</code></td><td>String</td><td>✓</td><td><code>PersonEmail</code></td><td>Primary email address</td></tr>
+        <tr><td><code>phone</code></td><td>String</td><td></td><td><code>Phone</code></td><td>Primary phone number</td></tr>
+        <tr><td><code>mobilePhone</code></td><td>String</td><td></td><td><code>PersonMobilePhone</code></td><td>Mobile phone for SMS</td></tr>
+        <tr><td><code>dateOfBirth</code></td><td>Date</td><td></td><td><code>PersonBirthdate</code></td><td>Date of birth</td></tr>
+        <tr><td><code>ssn</code></td><td>String(9)</td><td></td><td><code>SSN__c</code></td><td>Social Security Number (encrypted)</td></tr>
+        <tr><td><code>address</code></td><td>Object</td><td></td><td><code>PersonMailingAddress</code></td><td>Mailing address (street, city, state, zip)</td></tr>
+        <tr><td><code>partnerId</code></td><td>String(18)</td><td></td><td><code>Partner_Account__c</code></td><td>FK → Partner.id (referring partner)</td></tr>
+        <tr><td><code>status</code></td><td>Enum</td><td>✓</td><td><code>Status__c</code></td><td><code>active</code> | <code>inactive</code> | <code>pending</code></td></tr>
+        <tr><td><code>verificationStatus</code></td><td>Enum</td><td></td><td><code>Verification_Status__c</code></td><td><code>unverified</code> | <code>pending</code> | <code>verified</code> | <code>failed</code></td></tr>
+        <tr><td><code>createdDate</code></td><td>DateTime</td><td>✓</td><td><code>CreatedDate</code></td><td>Record creation timestamp</td></tr>
+        <tr><td><code>lastModifiedDate</code></td><td>DateTime</td><td>✓</td><td><code>LastModifiedDate</code></td><td>Last update timestamp</td></tr>
+    </table>
+    <p><strong>Relationships:</strong></p>
+    <ul>
+        <li><code>Client</code> → <code>FamilyMember[]</code> (one-to-many)</li>
+        <li><code>Client</code> → <code>Enrollment[]</code> (one-to-many)</li>
+        <li><code>Client</code> → <code>Notification[]</code> (one-to-many)</li>
+        <li><code>Client</code> → <code>SupportCase[]</code> (one-to-many)</li>
+        <li><code>Client</code> → <code>Partner</code> (many-to-one, via partnerId)</li>
+    </ul>
+
+    <h4>FamilyMember</h4>
+    <p><em>Source: Salesforce Custom Object</em> — Spouse or dependent linked to a Client for family plans</p>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+        <tr><td><code>id</code></td><td>String(18)</td><td>✓</td><td>Salesforce record ID</td></tr>
+        <tr><td><code>clientId</code></td><td>String(18)</td><td>✓</td><td>FK → Client.id (primary account holder)</td></tr>
+        <tr><td><code>relationshipType</code></td><td>Enum</td><td>✓</td><td><code>spouse</code> | <code>dependent</code></td></tr>
+        <tr><td><code>firstName</code></td><td>String</td><td>✓</td><td>Legal first name</td></tr>
+        <tr><td><code>lastName</code></td><td>String</td><td>✓</td><td>Legal last name</td></tr>
+        <tr><td><code>dateOfBirth</code></td><td>Date</td><td></td><td>Date of birth</td></tr>
+        <tr><td><code>ssn</code></td><td>String(9)</td><td></td><td>SSN (for credit services)</td></tr>
+        <tr><td><code>eligibleForServices</code></td><td>Boolean</td><td>✓</td><td>Can enroll in services</td></tr>
+        <tr><td><code>status</code></td><td>Enum</td><td>✓</td><td><code>active</code> | <code>inactive</code></td></tr>
     </table>
 
-    <h3>5.3 Services & Operations</h3>
+    <h4>Partner (Partner Account)</h4>
+    <p><em>Source: Salesforce Account (RecordType=Partner)</em> — B2B partner organization</p>
     <table>
-        <tr><th>Entity</th><th>Notes</th></tr>
-        <tr><td>Service</td><td>CreditBlock | CreditMonitoring | CreditRepair | CyberSweep</td></tr>
-        <tr><td>Enrollment</td><td>Client ↔ Service binding</td></tr>
-        <tr><td>Notification</td><td>type, level, read receipt</td></tr>
-        <tr><td>SupportCase</td><td>/client/{clientId}/support</td></tr>
-        <tr><td>BureauCase</td><td>/creditblock/v1/bureaus/*</td></tr>
+        <tr><th>Field</th><th>Type</th><th>Required</th><th>SF Field</th><th>Description</th></tr>
+        <tr><td><code>id</code></td><td>String(18)</td><td>✓</td><td><code>Id</code></td><td>Salesforce record ID</td></tr>
+        <tr><td><code>name</code></td><td>String</td><td>✓</td><td><code>Name</code></td><td>Partner company name</td></tr>
+        <tr><td><code>partnerCode</code></td><td>String</td><td>✓</td><td><code>Partner_Code__c</code></td><td>Unique partner identifier code</td></tr>
+        <tr><td><code>status</code></td><td>Enum</td><td>✓</td><td><code>Partner_Status__c</code></td><td><code>prospect</code> | <code>active</code> | <code>inactive</code> | <code>churned</code></td></tr>
+        <tr><td><code>registrationStatus</code></td><td>Enum</td><td></td><td><code>Registration_Status__c</code></td><td><code>pending</code> | <code>approved</code> | <code>rejected</code></td></tr>
+        <tr><td><code>pricebookId</code></td><td>String(18)</td><td></td><td><code>Pricebook__c</code></td><td>FK → Pricebook (partner-specific pricing)</td></tr>
+        <tr><td><code>website</code></td><td>String</td><td></td><td><code>Website</code></td><td>Partner website URL</td></tr>
+        <tr><td><code>industry</code></td><td>String</td><td></td><td><code>Industry</code></td><td>Business industry</td></tr>
+        <tr><td><code>billingAddress</code></td><td>Object</td><td></td><td><code>BillingAddress</code></td><td>Billing address</td></tr>
+    </table>
+    <p><strong>Relationships:</strong></p>
+    <ul>
+        <li><code>Partner</code> → <code>PartnerContact[]</code> (one-to-many)</li>
+        <li><code>Partner</code> → <code>Client[]</code> (one-to-many, clients referred by this partner)</li>
+        <li><code>Partner</code> → <code>Pricebook</code> (many-to-one)</li>
+    </ul>
+
+    <h4>PartnerContact</h4>
+    <p><em>Source: Salesforce Contact</em> — Individual user at a Partner organization</p>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+        <tr><td><code>id</code></td><td>String(18)</td><td>✓</td><td>Salesforce Contact ID</td></tr>
+        <tr><td><code>partnerId</code></td><td>String(18)</td><td>✓</td><td>FK → Partner.id</td></tr>
+        <tr><td><code>firstName</code></td><td>String</td><td>✓</td><td>First name</td></tr>
+        <tr><td><code>lastName</code></td><td>String</td><td>✓</td><td>Last name</td></tr>
+        <tr><td><code>email</code></td><td>String</td><td>✓</td><td>Email (used for Keycloak login)</td></tr>
+        <tr><td><code>phone</code></td><td>String</td><td></td><td>Phone number</td></tr>
+        <tr><td><code>title</code></td><td>String</td><td></td><td>Job title</td></tr>
+        <tr><td><code>role</code></td><td>Enum</td><td></td><td><code>admin</code> | <code>user</code> | <code>viewer</code></td></tr>
+        <tr><td><code>status</code></td><td>Enum</td><td>✓</td><td><code>active</code> | <code>inactive</code></td></tr>
     </table>
 
-    <h3>5.4 Vendor Entities</h3>
+    <h4>ClientVisibilityLink</h4>
+    <p><em>Source: Salesforce Junction Object</em> — Controls which PartnerContacts can see which Clients</p>
     <table>
-        <tr><th>Entity</th><th>API Path</th></tr>
-        <tr><td>ArrayUser</td><td>/vendor/array/v2/user</td></tr>
-        <tr><td>CreditReport</td><td>/vendor/array/v2/report/*</td></tr>
-        <tr><td>CyberSweepMonitor</td><td>/cybersweep/v1/idp/monitors/*</td></tr>
+        <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+        <tr><td><code>id</code></td><td>String(18)</td><td>✓</td><td>Junction record ID</td></tr>
+        <tr><td><code>partnerContactId</code></td><td>String(18)</td><td>✓</td><td>FK → PartnerContact.id</td></tr>
+        <tr><td><code>clientId</code></td><td>String(18)</td><td>✓</td><td>FK → Client.id</td></tr>
+        <tr><td><code>accessLevel</code></td><td>Enum</td><td>✓</td><td><code>read</code> | <code>write</code> | <code>admin</code></td></tr>
+        <tr><td><code>grantedAt</code></td><td>DateTime</td><td>✓</td><td>When access was granted</td></tr>
+        <tr><td><code>grantedBy</code></td><td>String(18)</td><td></td><td>Who granted access</td></tr>
     </table>
+
+    <h3>5.3 Services & Enrollments</h3>
+
+    <h4>Service</h4>
+    <p><em>Source: Salesforce Product</em> — Available services offered to clients</p>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+        <tr><td><code>id</code></td><td>String(18)</td><td>✓</td><td>Salesforce Product ID</td></tr>
+        <tr><td><code>name</code></td><td>String</td><td>✓</td><td>Service name</td></tr>
+        <tr><td><code>serviceType</code></td><td>Enum</td><td>✓</td><td><code>CreditBlock</code> | <code>CreditMonitoring</code> | <code>CreditRepair</code> | <code>CyberSweep</code></td></tr>
+        <tr><td><code>description</code></td><td>String</td><td></td><td>Service description</td></tr>
+        <tr><td><code>isActive</code></td><td>Boolean</td><td>✓</td><td>Available for enrollment</td></tr>
+        <tr><td><code>requiresVerification</code></td><td>Boolean</td><td>✓</td><td>Requires identity verification</td></tr>
+        <tr><td><code>vendorIntegration</code></td><td>String</td><td></td><td><code>array</code> | <code>cybersweep</code> | <code>internal</code></td></tr>
+    </table>
+
+    <h4>Enrollment</h4>
+    <p><em>Source: Salesforce Custom Object</em> — Client subscription to a Service</p>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+        <tr><td><code>id</code></td><td>String(18)</td><td>✓</td><td>Enrollment record ID</td></tr>
+        <tr><td><code>clientId</code></td><td>String(18)</td><td>✓</td><td>FK → Client.id</td></tr>
+        <tr><td><code>serviceId</code></td><td>String(18)</td><td>✓</td><td>FK → Service.id</td></tr>
+        <tr><td><code>status</code></td><td>Enum</td><td>✓</td><td><code>pending</code> | <code>active</code> | <code>suspended</code> | <code>cancelled</code></td></tr>
+        <tr><td><code>enrolledAt</code></td><td>DateTime</td><td>✓</td><td>Enrollment timestamp</td></tr>
+        <tr><td><code>activatedAt</code></td><td>DateTime</td><td></td><td>When service became active</td></tr>
+        <tr><td><code>cancelledAt</code></td><td>DateTime</td><td></td><td>Cancellation timestamp</td></tr>
+        <tr><td><code>cancellationReason</code></td><td>String</td><td></td><td>Reason for cancellation</td></tr>
+        <tr><td><code>externalId</code></td><td>String</td><td></td><td>Vendor-side enrollment ID (Array, CyberSweep)</td></tr>
+        <tr><td><code>consentGiven</code></td><td>Boolean</td><td>✓</td><td>Client consented to terms</td></tr>
+        <tr><td><code>consentTimestamp</code></td><td>DateTime</td><td></td><td>When consent was given</td></tr>
+    </table>
+
+    <h3>5.4 Support & Notifications</h3>
+
+    <h4>Notification</h4>
+    <p><em>Source: RCM API / DynamoDB</em> — In-app and push notifications to clients</p>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+        <tr><td><code>id</code></td><td>UUID</td><td>✓</td><td>Notification ID</td></tr>
+        <tr><td><code>clientId</code></td><td>String(18)</td><td>✓</td><td>FK → Client.id</td></tr>
+        <tr><td><code>type</code></td><td>Enum</td><td>✓</td><td><code>alert</code> | <code>info</code> | <code>action_required</code> | <code>promotional</code></td></tr>
+        <tr><td><code>category</code></td><td>Enum</td><td>✓</td><td><code>credit_block</code> | <code>monitoring</code> | <code>cybersweep</code> | <code>account</code> | <code>system</code></td></tr>
+        <tr><td><code>title</code></td><td>String</td><td>✓</td><td>Notification title</td></tr>
+        <tr><td><code>body</code></td><td>String</td><td>✓</td><td>Notification body text</td></tr>
+        <tr><td><code>data</code></td><td>Object</td><td></td><td>Additional payload (deep link, etc.)</td></tr>
+        <tr><td><code>read</code></td><td>Boolean</td><td>✓</td><td>Read status</td></tr>
+        <tr><td><code>readAt</code></td><td>DateTime</td><td></td><td>When notification was read</td></tr>
+        <tr><td><code>createdAt</code></td><td>DateTime</td><td>✓</td><td>Creation timestamp</td></tr>
+        <tr><td><code>expiresAt</code></td><td>DateTime</td><td></td><td>Expiration timestamp</td></tr>
+    </table>
+
+    <h4>SupportCase</h4>
+    <p><em>Source: Salesforce Case</em> — Customer support ticket</p>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+        <tr><td><code>id</code></td><td>String(18)</td><td>✓</td><td>Salesforce Case ID</td></tr>
+        <tr><td><code>caseNumber</code></td><td>String</td><td>✓</td><td>Human-readable case number</td></tr>
+        <tr><td><code>clientId</code></td><td>String(18)</td><td>✓</td><td>FK → Client.id</td></tr>
+        <tr><td><code>subject</code></td><td>String</td><td>✓</td><td>Case subject line</td></tr>
+        <tr><td><code>description</code></td><td>String</td><td></td><td>Case description</td></tr>
+        <tr><td><code>status</code></td><td>Enum</td><td>✓</td><td><code>new</code> | <code>in_progress</code> | <code>waiting_on_client</code> | <code>resolved</code> | <code>closed</code></td></tr>
+        <tr><td><code>priority</code></td><td>Enum</td><td></td><td><code>low</code> | <code>medium</code> | <code>high</code> | <code>critical</code></td></tr>
+        <tr><td><code>category</code></td><td>Enum</td><td></td><td><code>billing</code> | <code>technical</code> | <code>service</code> | <code>general</code></td></tr>
+        <tr><td><code>ownerId</code></td><td>String(18)</td><td></td><td>Assigned agent</td></tr>
+        <tr><td><code>createdDate</code></td><td>DateTime</td><td>✓</td><td>Case creation timestamp</td></tr>
+        <tr><td><code>closedDate</code></td><td>DateTime</td><td></td><td>Case closure timestamp</td></tr>
+    </table>
+
+    <h3>5.5 CreditBlock Operations</h3>
+
+    <h4>BureauCase</h4>
+    <p><em>Source: RCM API</em> — Credit freeze/unfreeze operation with a bureau</p>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+        <tr><td><code>id</code></td><td>UUID</td><td>✓</td><td>Bureau case ID</td></tr>
+        <tr><td><code>clientId</code></td><td>String(18)</td><td>✓</td><td>FK → Client.id</td></tr>
+        <tr><td><code>bureau</code></td><td>Enum</td><td>✓</td><td><code>equifax</code> | <code>experian</code> | <code>transunion</code></td></tr>
+        <tr><td><code>operationType</code></td><td>Enum</td><td>✓</td><td><code>freeze</code> | <code>unfreeze</code> | <code>temporary_lift</code></td></tr>
+        <tr><td><code>status</code></td><td>Enum</td><td>✓</td><td><code>pending</code> | <code>in_progress</code> | <code>completed</code> | <code>failed</code></td></tr>
+        <tr><td><code>pin</code></td><td>String</td><td></td><td>Bureau PIN (encrypted)</td></tr>
+        <tr><td><code>requestedAt</code></td><td>DateTime</td><td>✓</td><td>Request timestamp</td></tr>
+        <tr><td><code>completedAt</code></td><td>DateTime</td><td></td><td>Completion timestamp</td></tr>
+        <tr><td><code>errorMessage</code></td><td>String</td><td></td><td>Error details if failed</td></tr>
+        <tr><td><code>confirmationNumber</code></td><td>String</td><td></td><td>Bureau confirmation number</td></tr>
+    </table>
+
+    <h3>5.6 Vendor Entities</h3>
+
+    <h4>ArrayUser</h4>
+    <p><em>Source: Array API</em> — User record in Array credit monitoring system</p>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+        <tr><td><code>arrayUserId</code></td><td>String</td><td>✓</td><td>Array's internal user ID</td></tr>
+        <tr><td><code>clientId</code></td><td>String(18)</td><td>✓</td><td>FK → Client.id (Regal side)</td></tr>
+        <tr><td><code>email</code></td><td>String</td><td>✓</td><td>Email registered with Array</td></tr>
+        <tr><td><code>status</code></td><td>Enum</td><td>✓</td><td><code>active</code> | <code>inactive</code> | <code>suspended</code></td></tr>
+        <tr><td><code>enrollmentDate</code></td><td>DateTime</td><td>✓</td><td>When enrolled in Array</td></tr>
+        <tr><td><code>monitoringEnabled</code></td><td>Boolean</td><td>✓</td><td>Credit monitoring active</td></tr>
+        <tr><td><code>lastReportDate</code></td><td>DateTime</td><td></td><td>Last credit report pulled</td></tr>
+    </table>
+
+    <h4>CreditReport</h4>
+    <p><em>Source: Array API</em> — Credit report data from Array</p>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+        <tr><td><code>reportId</code></td><td>String</td><td>✓</td><td>Array report ID</td></tr>
+        <tr><td><code>arrayUserId</code></td><td>String</td><td>✓</td><td>FK → ArrayUser.arrayUserId</td></tr>
+        <tr><td><code>reportType</code></td><td>Enum</td><td>✓</td><td><code>full</code> | <code>summary</code> | <code>score_only</code></td></tr>
+        <tr><td><code>bureau</code></td><td>Enum</td><td>✓</td><td><code>equifax</code> | <code>experian</code> | <code>transunion</code></td></tr>
+        <tr><td><code>score</code></td><td>Integer</td><td></td><td>Credit score (300-850)</td></tr>
+        <tr><td><code>scoreModel</code></td><td>String</td><td></td><td>e.g., <code>VantageScore3</code>, <code>FICO8</code></td></tr>
+        <tr><td><code>pulledAt</code></td><td>DateTime</td><td>✓</td><td>When report was pulled</td></tr>
+        <tr><td><code>pdfUrl</code></td><td>String</td><td></td><td>URL to PDF report (signed, expires)</td></tr>
+    </table>
+
+    <h4>CyberSweepMonitor</h4>
+    <p><em>Source: CyberSweep API</em> — Dark web / identity monitoring configuration</p>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+        <tr><td><code>monitorId</code></td><td>String</td><td>✓</td><td>CyberSweep monitor ID</td></tr>
+        <tr><td><code>clientId</code></td><td>String(18)</td><td>✓</td><td>FK → Client.id</td></tr>
+        <tr><td><code>monitorType</code></td><td>Enum</td><td>✓</td><td><code>email</code> | <code>ssn</code> | <code>phone</code> | <code>passport</code> | <code>credit_card</code></td></tr>
+        <tr><td><code>monitoredValue</code></td><td>String</td><td>✓</td><td>Value being monitored (hashed/encrypted)</td></tr>
+        <tr><td><code>status</code></td><td>Enum</td><td>✓</td><td><code>active</code> | <code>paused</code> | <code>deleted</code></td></tr>
+        <tr><td><code>alertCount</code></td><td>Integer</td><td></td><td>Number of alerts generated</td></tr>
+        <tr><td><code>lastAlertAt</code></td><td>DateTime</td><td></td><td>Most recent alert timestamp</td></tr>
+        <tr><td><code>createdAt</code></td><td>DateTime</td><td>✓</td><td>Monitor creation timestamp</td></tr>
+    </table>
+
+    <h3>5.7 Entity Relationship Diagram</h3>
+    <pre style="background: var(--accent); padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.8rem;">
+┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
+│  UserIdentity   │       │     Partner     │       │     Service     │
+│  (Keycloak)     │       │  (SF Account)   │       │  (SF Product)   │
+└────────┬────────┘       └────────┬────────┘       └────────┬────────┘
+         │                         │                         │
+         │ 1:1                     │ 1:N                     │
+         ▼                         ▼                         │
+┌─────────────────┐       ┌─────────────────┐                │
+│     Client      │◀──────│ PartnerContact  │                │
+│ (SF Person Acct)│       │  (SF Contact)   │                │
+└────────┬────────┘       └────────┬────────┘                │
+         │                         │                         │
+         │ 1:N                     │                         │
+         ▼                         │                         │
+┌─────────────────┐       ┌─────────────────┐                │
+│  FamilyMember   │       │ClientVisibility │                │
+└─────────────────┘       │     Link        │                │
+                          └─────────────────┘                │
+         │                                                   │
+         │ 1:N                                               │
+         ▼                                                   ▼
+┌─────────────────┐                               ┌─────────────────┐
+│   Enrollment    │◀──────────────────────────────│                 │
+└────────┬────────┘                               └─────────────────┘
+         │
+         │ 1:N
+         ▼
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│   ArrayUser     │  │   BureauCase    │  │ CyberSweepMon   │
+└────────┬────────┘  └─────────────────┘  └─────────────────┘
+         │
+         │ 1:N
+         ▼
+┌─────────────────┐
+│  CreditReport   │
+└─────────────────┘
+    </pre>
     <div class="validation-note">
         <strong>🔍 VALIDATION — Section 5:</strong>
         <ul>
