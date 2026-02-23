@@ -51,6 +51,17 @@
         .priority-medium { color: var(--yellow); }
         .priority-low { color: var(--green); }
         hr { border: none; border-top: 1px solid var(--accent); margin: 2rem 0; }
+        .validation-note {
+            background: rgba(78, 204, 163, 0.15);
+            border-left: 4px solid var(--green);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .validation-note strong { color: var(--green); }
+        .validation-note code { background: rgba(78, 204, 163, 0.3); }
+        .validation-note ul { margin: 0.5rem 0 0 1.5rem; }
+        .validation-note li { margin: 0.2rem 0; }
     </style>
 </head>
 <body>
@@ -108,6 +119,17 @@
         <tr><td><strong>Breaking Changes</strong></td><td>Require 2-week notice + migration guide</td></tr>
         <tr><td><strong>Version Format</strong></td><td>MAJOR.MINOR (e.g., 2.1) — major = breaking, minor = additive</td></tr>
     </table>
+
+    <div class="validation-note">
+        <strong>🔍 VALIDATION — Section 1:</strong>
+        <ul>
+            <li><strong>AWS:</strong> Run <code>aws organizations list-accounts</code> to confirm all AWS accounts are listed</li>
+            <li><strong>AWS:</strong> Check <code>aws ec2 describe-regions --query 'Regions[].RegionName'</code> for active regions</li>
+            <li><strong>Git:</strong> Review <code>rcm-serverless/README.md</code> for any unlisted systems</li>
+            <li><strong>Salesforce:</strong> Check org settings for data residency configuration</li>
+            <li><strong>UK Timeline:</strong> Confirm June 2026 target with Anthony/Thomas</li>
+        </ul>
+    </div>
 
     <h2>2) Domain Boundaries (Bounded Contexts)</h2>
     <p>Units of ownership that map cleanly to repos, AWS stacks, and team responsibility. Each context has clear boundaries and communicates with others through defined interfaces.</p>
@@ -221,6 +243,17 @@
         <li>Use UK-resident vendor endpoints where available (Array UK, etc.)</li>
     </ul>
     <p><em>No new bounded contexts required for UK — same contexts, regional deployment.</em></p>
+
+    <div class="validation-note">
+        <strong>🔍 VALIDATION — Section 2:</strong>
+        <ul>
+            <li><strong>Git:</strong> Run <code>gh repo list regalcredit --limit 50</code> to verify repo names match contexts</li>
+            <li><strong>Git:</strong> Check <code>rcm-serverless/package.json</code> for submodule dependencies</li>
+            <li><strong>AWS:</strong> Run <code>aws cloudformation list-stacks --query 'StackSummaries[].StackName'</code> to verify stack-to-context mapping</li>
+            <li><strong>Team:</strong> Confirm owner assignments (Platform vs Product Eng) with Thomas</li>
+            <li><strong>Keycloak:</strong> Check realm configuration for UK-specific realm plans</li>
+        </ul>
+    </div>
 
     <h2>3) System Landscape</h2>
     <p>Where truth lives and where actions occur. Systems are organized by function and include both US (current) and UK (planned) deployments.</p>
@@ -407,6 +440,21 @@
     </table>
     <p><em>Amplify apps auto-deploy on branch push. CDK Pipelines use CodePipeline with dev → staging → prod promotion.</em></p>
 
+    <div class="validation-note">
+        <strong>🔍 VALIDATION — Section 3:</strong>
+        <ul>
+            <li><strong>AWS RDS:</strong> Run <code>aws rds describe-db-instances --query 'DBInstances[*].[DBInstanceIdentifier,Engine,PubliclyAccessible]'</code></li>
+            <li><strong>AWS Lambda:</strong> Run <code>aws lambda list-functions --query 'Functions[].FunctionName' | grep -E 'gobodo|keycloak|core|creditblock|cybersweep'</code></li>
+            <li><strong>AWS Amplify:</strong> Run <code>aws amplify list-apps</code> to verify all front-end apps</li>
+            <li><strong>AWS API Gateway:</strong> Run <code>aws apigateway get-rest-apis</code> to confirm API IDs</li>
+            <li><strong>AWS Security Groups:</strong> Audit Gobodo SG with <code>aws ec2 describe-security-groups --group-ids &lt;sg-id&gt;</code></li>
+            <li><strong>Git:</strong> Check each repo's <code>buildspec.yml</code> or <code>amplify.yml</code> for pipeline details</li>
+            <li><strong>Keycloak:</strong> Export realm config to verify SSO URLs: <code>kcadm.sh get realms</code></li>
+            <li><strong>Vendor Docs:</strong> Review Array, CyberSweep, Vouched API docs for UK availability</li>
+            <li><strong>Enrollment Pages:</strong> Identify actual hosting — check Route53 for DNS records</li>
+        </ul>
+    </div>
+
     <h2>4) API Surface</h2>
     <p>All APIs are served via AWS API Gateway with Keycloak JWT authorization. Each route requires specific scopes (capabilities) for access.</p>
     
@@ -580,6 +628,20 @@
         <li><strong>UK APIs:</strong> Same version scheme, regional deployment</li>
     </ul>
 
+    <div class="validation-note">
+        <strong>🔍 VALIDATION — Section 4:</strong>
+        <ul>
+            <li><strong>AWS API Gateway:</strong> Export full route list: <code>aws apigateway get-resources --rest-api-id &lt;id&gt; --query 'items[].path'</code></li>
+            <li><strong>AWS API Gateway:</strong> Verify rate limits: <code>aws apigateway get-usage-plans</code></li>
+            <li><strong>Keycloak:</strong> Export all scopes: <code>kcadm.sh get clients -r &lt;realm&gt; --fields 'clientId,optionalClientScopes'</code></li>
+            <li><strong>Git:</strong> Check <code>rcm-serverless/lib/routes/</code> for complete route definitions</li>
+            <li><strong>Git:</strong> Review <code>rcm-serverless/openapi.yaml</code> if it exists for authoritative route spec</li>
+            <li><strong>Lambda:</strong> Verify Lambda-to-route mappings via API Gateway integrations</li>
+            <li><strong>Postman/Insomnia:</strong> Check team collections for undocumented endpoints</li>
+            <li><strong>Webhook IPs:</strong> Verify Array/CyberSweep IP allowlists in Security Groups</li>
+        </ul>
+    </div>
+
     <h2>5) Entity Model (Canonical)</h2>
     
     <h3>5.1 Identity & Access</h3>
@@ -615,14 +677,36 @@
         <tr><td>CreditReport</td><td>/vendor/array/v2/report/*</td></tr>
         <tr><td>CyberSweepMonitor</td><td>/cybersweep/v1/idp/monitors/*</td></tr>
     </table>
-    <div class="review-note">
-        <strong>🔴 REVIEW:</strong> Cross-check against Salesforce/RDS schemas. IMPROVE: Add field-level definitions (types, constraints, required). Add FamilyMember attributes.
+    <div class="validation-note">
+        <strong>🔍 VALIDATION — Section 5:</strong>
+        <ul>
+            <li><strong>Salesforce:</strong> Export object definitions: Setup → Object Manager → Export all fields for Person Account, Contact, Partner Account</li>
+            <li><strong>Salesforce:</strong> Run SOQL: <code>SELECT EntityDefinition.QualifiedApiName, QualifiedApiName, DataType FROM FieldDefinition WHERE EntityDefinition.QualifiedApiName IN ('Account', 'Contact')</code></li>
+            <li><strong>RDS:</strong> Export schema: <code>pg_dump --schema-only rcm_dsync_db > schema.sql</code></li>
+            <li><strong>RDS:</strong> Run: <code>SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = 'public'</code></li>
+            <li><strong>Gobodo:</strong> Export custom object definitions from Gobodo metadata tables</li>
+            <li><strong>Git:</strong> Check <code>rcm-serverless/src/models/</code> or <code>types/</code> for TypeScript interfaces</li>
+            <li><strong>Keycloak:</strong> Review user attributes and required fields in realm settings</li>
+            <li><strong>Array API Docs:</strong> Pull entity definitions for ArrayUser, CreditReport</li>
+            <li><strong>CyberSweep API Docs:</strong> Pull entity definitions for monitors</li>
+        </ul>
     </div>
 
     <h2>6) Projections & Read Models</h2>
     <p><em>Target architecture for read-optimized views (DynamoDB, materialized views)</em></p>
     <div class="review-note">
         <strong>🔴 REVIEW:</strong> Section is sparse. Define specific read models for: Client Dashboard views, Partner aggregations, Reporting/analytics, Agent decision-making.
+    </div>
+    <div class="validation-note">
+        <strong>🔍 VALIDATION — Section 6:</strong>
+        <ul>
+            <li><strong>AWS DynamoDB:</strong> Run <code>aws dynamodb list-tables</code> to find existing read tables</li>
+            <li><strong>AWS DynamoDB:</strong> Describe table schemas: <code>aws dynamodb describe-table --table-name &lt;name&gt;</code></li>
+            <li><strong>Git:</strong> Search for DynamoDB table definitions in CDK: <code>grep -r "dynamodb.Table" rcm-serverless/</code></li>
+            <li><strong>Client Dashboard:</strong> Review React components to identify data shapes needed</li>
+            <li><strong>Client Dashboard:</strong> Check Apollo/GraphQL queries if used, or REST call patterns</li>
+            <li><strong>RDS:</strong> Check for materialized views: <code>SELECT matviewname FROM pg_matviews WHERE schemaname = 'public'</code></li>
+        </ul>
     </div>
 
     <h2>7) Commands vs Events</h2>
@@ -644,6 +728,18 @@
     <div class="review-note">
         <strong>🔴 REVIEW:</strong> Verify event coverage is complete. IMPROVE: Add sequence diagrams for key flows. Add Commands section.
     </div>
+    <div class="validation-note">
+        <strong>🔍 VALIDATION — Section 7:</strong>
+        <ul>
+            <li><strong>AWS EventBridge:</strong> List event buses: <code>aws events list-event-buses</code></li>
+            <li><strong>AWS EventBridge:</strong> List rules: <code>aws events list-rules --query 'Rules[].Name'</code></li>
+            <li><strong>AWS SNS:</strong> List topics: <code>aws sns list-topics</code></li>
+            <li><strong>AWS SQS:</strong> List queues: <code>aws sqs list-queues</code></li>
+            <li><strong>Git:</strong> Search for event definitions: <code>grep -r "EventBridge\|putEvents\|SNS\|publish" rcm-serverless/</code></li>
+            <li><strong>Git:</strong> Check for event type constants or enums in <code>src/types/</code> or <code>src/events/</code></li>
+            <li><strong>CloudWatch Logs:</strong> Sample recent events to discover undocumented event types</li>
+        </ul>
+    </div>
 
     <h2>8) Policy & Safety Model</h2>
     <p><strong>Capabilities:</strong> <code>salesforce:read</code> vs <code>salesforce:read-write</code>, <code>client-dashboard:read</code> vs <code>client-dashboard:read-write</code></p>
@@ -651,6 +747,18 @@
     <p><strong>Agent Question:</strong> Can I do this autonomously, or draft + ask approval?</p>
     <div class="review-note">
         <strong>🔴 REVIEW:</strong> Expand capability matrix. Add agent autonomy levels (autonomous / human-in-loop / draft-only). Add escalation paths. Define audit requirements.
+    </div>
+    <div class="validation-note">
+        <strong>🔍 VALIDATION — Section 8:</strong>
+        <ul>
+            <li><strong>Keycloak:</strong> Export all roles: <code>kcadm.sh get roles -r &lt;realm&gt;</code></li>
+            <li><strong>Keycloak:</strong> Export all client scopes: <code>kcadm.sh get client-scopes -r &lt;realm&gt;</code></li>
+            <li><strong>Keycloak:</strong> Review scope-to-role mappings in realm admin console</li>
+            <li><strong>Git:</strong> Check authorizer Lambda for scope validation logic</li>
+            <li><strong>Git:</strong> Search for permission checks: <code>grep -r "scope\|permission\|authorize" rcm-serverless/</code></li>
+            <li><strong>AWS IAM:</strong> Review Lambda execution roles for least-privilege: <code>aws iam list-role-policies --role-name &lt;role&gt;</code></li>
+            <li><strong>Compliance:</strong> Review FCA requirements for UK audit logging</li>
+        </ul>
     </div>
 
     <h2>9) Implementation Bindings</h2>
@@ -666,6 +774,17 @@
     <div class="review-note">
         <strong>🔴 REVIEW:</strong> Verify mappings are accurate. IMPROVE: Add deployment commands. Add CI/CD pipeline references.
     </div>
+    <div class="validation-note">
+        <strong>🔍 VALIDATION — Section 9:</strong>
+        <ul>
+            <li><strong>Git:</strong> Run <code>gh repo list regalcredit --limit 100 --json name,url</code> to get full repo list</li>
+            <li><strong>Git:</strong> Check each repo's README for deployment instructions</li>
+            <li><strong>AWS CloudFormation:</strong> List all stacks: <code>aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE</code></li>
+            <li><strong>AWS CodePipeline:</strong> List pipelines: <code>aws codepipeline list-pipelines</code></li>
+            <li><strong>AWS Amplify:</strong> Get app details: <code>aws amplify list-apps --query 'apps[].{name:name,repo:repository}'</code></li>
+            <li><strong>Git:</strong> Check <code>.github/workflows/</code> or <code>buildspec.yml</code> in each repo</li>
+        </ul>
+    </div>
 
     <h2>10) Migration Snapshot (Salesforce → RDS)</h2>
     <h3>rcm-dsync footprint</h3>
@@ -679,6 +798,18 @@
     <div class="review-note security-warning">
         <strong>🟡 FLAG:</strong> No production resources for rcm-dsync. Is this intentional (not yet deployed) or an inventory gap? Clarify production timeline.
     </div>
+    <div class="validation-note">
+        <strong>🔍 VALIDATION — Section 10:</strong>
+        <ul>
+            <li><strong>AWS (Dev):</strong> Verify dev/staging resources: <code>aws cloudformation list-stacks --query 'StackSummaries[?contains(StackName, `dsync`)]' --profile dev</code></li>
+            <li><strong>AWS (Prod):</strong> Check production account: <code>aws cloudformation list-stacks --query 'StackSummaries[?contains(StackName, `dsync`)]' --profile prod</code></li>
+            <li><strong>AWS Step Functions:</strong> List state machines: <code>aws stepfunctions list-state-machines</code></li>
+            <li><strong>AWS EventBridge:</strong> Check schedules: <code>aws events list-rules --name-prefix rcm-dsync</code></li>
+            <li><strong>Salesforce:</strong> Check Connected Apps for data sync integration credentials</li>
+            <li><strong>Git:</strong> Review <code>salesforce-data-sync/</code> repo for deployment status and roadmap</li>
+            <li><strong>Team:</strong> Confirm production timeline with Thomas — is this waiting on something?</li>
+        </ul>
+    </div>
 
     <h2>11) Output Formats</h2>
     <ul>
@@ -689,6 +820,17 @@
     </ul>
     <div class="review-note">
         <strong>🔴 REVIEW:</strong> Define actual JSON/YAML schemas. Create OpenAPI spec for agents. Add example payloads.
+    </div>
+    <div class="validation-note">
+        <strong>🔍 VALIDATION — Section 11:</strong>
+        <ul>
+            <li><strong>Git:</strong> Check if <code>openapi.yaml</code> or <code>swagger.json</code> exists in any repo</li>
+            <li><strong>Git:</strong> Search for JSON Schema files: <code>find . -name "*.schema.json"</code></li>
+            <li><strong>Git:</strong> Check <code>ontology-map.aws.yaml</code> for current machine-readable format</li>
+            <li><strong>Postman:</strong> Export collections as OpenAPI if team uses Postman</li>
+            <li><strong>TypeScript:</strong> Consider using <code>typescript-json-schema</code> to generate schemas from interfaces</li>
+            <li><strong>Agent Integration:</strong> Define MCP server interface for agent access to ontology</li>
+        </ul>
     </div>
 
     <hr>
