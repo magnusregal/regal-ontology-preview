@@ -259,42 +259,43 @@
     <p>Where truth lives and where actions occur. Systems are organized by function and include both US (current) and UK (planned) deployments.</p>
     
     <h3>3.1 Identity & Authorization</h3>
+    <p><em>✅ Verified via AWS scan 2026-02-22</em></p>
     <table>
-        <tr><th>System</th><th>US Infrastructure</th><th>UK Infrastructure</th><th>URLs</th></tr>
+        <tr><th>System</th><th>Dev Account (865942198740)</th><th>Prod Account (975050223773)</th><th>URLs</th></tr>
         <tr>
-            <td><strong>Keycloak</strong><br><small>Identity provider, SSO, user management</small></td>
-            <td><code>keycloak-development</code> (dev)<br><code>keycloak-v16-release</code> (prod)<br>Aurora MySQL</td>
-            <td><em>TBD — eu-west-2</em></td>
+            <td><strong>Keycloak</strong><br><small>Identity provider, SSO</small></td>
+            <td><code>keycloak-development</code><br>Aurora MySQL (2 instances)<br>✅ Not public</td>
+            <td><code>keycloak-v16-release</code><br>Aurora MySQL (6 instances)<br>✅ Not public</td>
             <td>sso.dev.regalcredit.com<br>sso.stg.regalcredit.com<br><strong>sso.regalcredit.com</strong></td>
         </tr>
         <tr>
             <td><strong>Keycloak Authorizer</strong><br><small>Lambda authorizer for API Gateway</small></td>
+            <td><code>core-cdk-lambda-keycloak-authorizer-development-pl</code><br><code>core-cdk-lambda-keycloak-authorizer-staging-pl</code></td>
             <td><code>core-cdk-lambda-keycloak-authorizer-*</code></td>
-            <td><em>TBD</em></td>
             <td>N/A (internal)</td>
         </tr>
     </table>
 
     <h3>3.2 Core Data Systems</h3>
+    <p><em>✅ Verified via AWS scan 2026-02-22</em></p>
     <table>
-        <tr><th>System</th><th>Role</th><th>US Infrastructure</th><th>UK Infrastructure</th></tr>
+        <tr><th>System</th><th>Role</th><th>Dev (865942198740)</th><th>Prod (975050223773)</th></tr>
         <tr>
             <td><strong>Salesforce</strong></td>
-            <td>Legacy SoR — Person Accounts, Contacts, Partner Accounts, Cases, picklists</td>
-            <td>External (Salesforce Cloud)</td>
-            <td>Same instance (consider data residency)</td>
+            <td>Legacy SoR — Person Accounts, Contacts, Partner Accounts, Cases</td>
+            <td colspan="2">External (Salesforce Cloud) — same instance for dev/prod</td>
         </tr>
         <tr>
             <td><strong>RDS (sfdatasync)</strong></td>
-            <td>Target SoR — synced from Salesforce, source for projections</td>
-            <td><code>rcm-dsync-data-main-rds-stg</code><br>Account: 865942198740<br>Region: us-east-1</td>
-            <td><em>TBD — eu-west-2</em></td>
+            <td>Target SoR — synced from Salesforce</td>
+            <td><code>rcm-dsync-data-main-rds-dev</code><br><code>rcm-dsync-data-main-rds-stg</code><br>+ per-dev instances (alex, jim, wei)<br>Postgres, ✅ Not public</td>
+            <td class="flag">⚠️ <strong>NOT DEPLOYED</strong><br>No rcm-dsync RDS in production!</td>
         </tr>
         <tr>
             <td><strong>DynamoDB</strong></td>
-            <td>Read-optimized projections, fast dashboard queries</td>
+            <td>Read-optimized projections</td>
             <td><em>Not yet deployed</em></td>
-            <td><em>TBD</em></td>
+            <td><em>Not yet deployed</em></td>
         </tr>
     </table>
 
@@ -306,36 +307,51 @@
         <li>Role-based field visibility and permissions</li>
         <li>Schema evolution without code deployments</li>
     </ul>
+    <p><em>✅ Verified via AWS scan 2026-02-22</em></p>
     <table>
-        <tr><th>Component</th><th>US Infrastructure</th><th>UK Infrastructure</th><th>Notes</th></tr>
+        <tr><th>Component</th><th>Dev (865942198740)</th><th>Prod (975050223773)</th><th>Notes</th></tr>
         <tr>
             <td><strong>Gobodo API</strong></td>
-            <td><code>gobodo-*</code> Lambdas</td>
+            <td><code>GobodoCacheLambda-Dev</code><br><code>CacheManagementLambda-Dev</code><br><code>StoreCacheLambda-Dev</code></td>
             <td><em>TBD</em></td>
-            <td>REST API for CRUD on custom objects</td>
+            <td>REST API for custom objects</td>
         </tr>
         <tr>
             <td><strong>Gobodo Database</strong></td>
-            <td><code>rcm-gobodo-db-stg</code> (Postgres)</td>
-            <td><em>TBD</em></td>
-            <td>Stores custom object data + metadata</td>
+            <td><code>rcm-gobodo-db-stg</code><br>Postgres<br>Endpoint: <code>rcm-gobodo-db-stg.cqhna2fiukih.us-east-1.rds.amazonaws.com</code></td>
+            <td><em>Not deployed</em></td>
+            <td>Custom object data + metadata</td>
         </tr>
         <tr>
             <td><strong>Gobodo Cache</strong></td>
-            <td><code>gobodo-cache-*</code> (ElastiCache)</td>
+            <td><code>gobodo-cache-infra-dev</code> (API Gateway)<br>ElastiCache stack</td>
             <td><em>TBD</em></td>
-            <td>Schema caching for performance</td>
+            <td>Schema caching</td>
+        </tr>
+        <tr>
+            <td><strong>Gobodo Neo4j</strong></td>
+            <td><code>rcm-gobodo-neo4j-stg</code></td>
+            <td><em>TBD</em></td>
+            <td>Graph DB (discovered in scan)</td>
         </tr>
     </table>
     <div class="review-note security-warning">
-        <strong>🟡 SECURITY ACTION REQUIRED:</strong> Gobodo DB is currently publicly accessible (Security Group allows 0.0.0.0/0 on port 5432). 
+        <strong>🚨 SECURITY ISSUE CONFIRMED (AWS scan 2026-02-22):</strong>
         <br><br>
-        <strong>Remediation:</strong>
+        <table style="margin: 0.5rem 0;">
+            <tr><td><strong>Instance:</strong></td><td><code>rcm-gobodo-db-stg</code></td></tr>
+            <tr><td><strong>PubliclyAccessible:</strong></td><td><span class="flag">TRUE</span></td></tr>
+            <tr><td><strong>Security Group:</strong></td><td><code>sg-09f4dfb35576fa76a</code></td></tr>
+            <tr><td><strong>Port 5432:</strong></td><td><span class="flag">Open to 0.0.0.0/0</span></td></tr>
+        </table>
+        <br>
+        <strong>Remediation Required:</strong>
         <ul style="margin-top: 0.5rem;">
-            <li>Restrict SG to VPC CIDR only</li>
+            <li>Modify SG <code>sg-09f4dfb35576fa76a</code> to restrict to VPC CIDR only</li>
+            <li>Set <code>PubliclyAccessible=False</code> on RDS instance</li>
             <li>Add VPN/bastion for dev access</li>
-            <li>Enable SSL enforcement</li>
-            <li><strong>Owner:</strong> Platform team | <strong>Target:</strong> Before UK launch</li>
+            <li>Enable SSL enforcement (<code>rds.force_ssl=1</code>)</li>
+            <li><strong>Owner:</strong> Platform team | <strong>Priority:</strong> CRITICAL</li>
         </ul>
     </div>
 
@@ -366,37 +382,45 @@
     </table>
 
     <h3>3.5 Front Ends</h3>
+    <p><em>✅ Verified via AWS scan 2026-02-22</em></p>
     <table>
-        <tr><th>App</th><th>Dev</th><th>Staging</th><th>Production</th><th>Infrastructure</th><th>Status</th></tr>
+        <tr><th>App</th><th>Dev</th><th>Staging</th><th>Production</th><th>Amplify App</th><th>Status</th></tr>
         <tr>
             <td><strong>Client Dashboard</strong><br><small>Partner-facing portal</small></td>
             <td>partner.dev.regalcredit.com</td>
             <td>partner.stg.regalcredit.com</td>
             <td><strong>partner.regalcredit.com</strong></td>
-            <td>AWS Amplify</td>
+            <td><code>RegalCreditB2BWebDashboard</code><br><code>d3h9qkfgty36hl.amplifyapp.com</code></td>
             <td>✅ Live</td>
         </tr>
         <tr>
             <td><strong>Product Hub</strong><br><small>Internal ops + Gobodo UI</small></td>
             <td>producthub.dev.regalcredit.com</td>
             <td>producthub.stg.regalcredit.com</td>
-            <td><em>Not yet deployed</em></td>
-            <td>AWS Amplify</td>
-            <td>🚧 Dev/Staging live</td>
+            <td><em>Not deployed</em></td>
+            <td><code>Regal-Product-Hub-Dev</code><br><code>Regal-Product-Hub-Stg</code></td>
+            <td>🚧 Dev/Stg only</td>
+        </tr>
+        <tr>
+            <td><strong>Partner Portal (legacy?)</strong></td>
+            <td colspan="3"><em>Unknown</em></td>
+            <td><code>partnerportal2023</code><br><code>d1f7cg9rxlwckc.amplifyapp.com</code></td>
+            <td>❓ Verify status</td>
         </tr>
         <tr>
             <td><strong>Enrollment Pages</strong><br><small>Client signup flows</small></td>
             <td colspan="3"><em>Hosted separately (not Amplify)</em></td>
-            <td>CloudFront + S3 / Other</td>
+            <td>N/A</td>
             <td>✅ Live</td>
         </tr>
         <tr>
             <td><strong>B2C Mobile Apps</strong><br><small>Consumer-facing iOS</small></td>
             <td colspan="3">App Store (TestFlight for dev/staging)</td>
-            <td>iOS native</td>
+            <td>N/A</td>
             <td>✅ Live</td>
         </tr>
     </table>
+    <p><em>Note: No Amplify apps found in production account (975050223773). Client Dashboard production may use different hosting.</em></p>
 
     <h3>3.6 CI/CD & Deployment Pipelines</h3>
     <table>
@@ -459,13 +483,14 @@
     <p>All APIs are served via AWS API Gateway with Keycloak JWT authorization. Each route requires specific scopes (capabilities) for access.</p>
     
     <h3>4.1 API Gateways</h3>
+    <p><em>✅ Verified via AWS scan 2026-02-22</em></p>
     <table>
-        <tr><th>Domain</th><th>Stage</th><th>API ID</th><th>Region</th><th>Notes</th></tr>
-        <tr><td>api.dev.regalcredit.com</td><td>development</td><td>yqo32wi8cd</td><td>us-east-1</td><td>Dev testing</td></tr>
-        <tr><td>api.stg.regalcredit.com</td><td>staging</td><td>fl1928grye</td><td>us-east-1</td><td>Pre-prod validation</td></tr>
-        <tr><td><strong>api.regalcredit.com</strong></td><td>production</td><td>gy0zwkmroe</td><td>us-east-1</td><td>Live traffic</td></tr>
-        <tr><td><strong>webhook.regalcredit.com</strong></td><td>production</td><td>ndcltu5vvd</td><td>us-east-1</td><td>Vendor callbacks</td></tr>
-        <tr><td><em>api.uk.regalcredit.com</em></td><td><em>planned</em></td><td><em>TBD</em></td><td>eu-west-2</td><td>UK API (June 2026)</td></tr>
+        <tr><th>Domain</th><th>Stage</th><th>API ID</th><th>Region</th><th>Account</th><th>Notes</th></tr>
+        <tr><td>api.dev.regalcredit.com</td><td>development</td><td><code>yqo32wi8cd</code></td><td>us-east-1</td><td>865942198740</td><td>✅ Verified</td></tr>
+        <tr><td>api.stg.regalcredit.com</td><td>staging</td><td><code>fl1928grye</code></td><td>us-east-1</td><td>865942198740</td><td>✅ Verified</td></tr>
+        <tr><td><strong>api.regalcredit.com</strong></td><td>production</td><td><code>gy0zwkmroe</code></td><td>us-east-1</td><td>975050223773</td><td>✅ Verified</td></tr>
+        <tr><td><strong>webhook.regalcredit.com</strong></td><td>production</td><td><code>ndcltu5vvd</code></td><td>us-east-1</td><td>975050223773</td><td>✅ Verified</td></tr>
+        <tr><td><em>api.uk.regalcredit.com</em></td><td><em>planned</em></td><td><em>TBD</em></td><td>eu-west-2</td><td>TBD</td><td>UK API (June 2026)</td></tr>
     </table>
 
     <h3>4.2 Authentication & Authorization</h3>
@@ -1051,16 +1076,29 @@
     </div>
 
     <h2>10) Migration Snapshot (Salesforce → RDS)</h2>
+    <p><em>✅ Verified via AWS scan 2026-02-22</em></p>
     <h3>rcm-dsync footprint</h3>
     <table>
-        <tr><th>Component</th><th>Dev/Staging</th><th>Production</th></tr>
-        <tr><td>Step Functions</td><td>rcm-dsync-sync-orchestrator-*</td><td class="flag">None</td></tr>
-        <tr><td>EventBridge</td><td>rcm-dsync-sync-schedule-*</td><td class="flag">None</td></tr>
-        <tr><td>Lambdas</td><td>rcm-dsync-compute-*</td><td class="flag">None</td></tr>
-        <tr><td>RDS</td><td>rcm-dsync-data-main-rds-stg</td><td class="flag">None</td></tr>
+        <tr><th>Component</th><th>Dev (865942198740)</th><th>Prod (975050223773)</th></tr>
+        <tr><td>Step Functions</td><td>rcm-dsync-sync-orchestrator-*</td><td class="flag">❌ None</td></tr>
+        <tr><td>EventBridge</td><td>rcm-dsync-sync-schedule-*</td><td class="flag">❌ None</td></tr>
+        <tr><td>Lambdas</td><td><code>rcm-dsync-compute-dev-fetch-batch</code><br>+ others</td><td class="flag">❌ None</td></tr>
+        <tr>
+            <td>RDS</td>
+            <td><code>rcm-dsync-data-main-rds-dev</code><br><code>rcm-dsync-data-main-rds-stg</code><br><code>rcm-dsync-data-main-rds-dev-alex</code><br><code>rcm-dsync-data-main-rds-dev-jim</code><br><code>rcm-dsync-data-main-rds-dev-wei</code><br>All Postgres, ✅ Not public</td>
+            <td class="flag">❌ None</td>
+        </tr>
     </table>
     <div class="review-note security-warning">
-        <strong>🟡 FLAG:</strong> No production resources for rcm-dsync. Is this intentional (not yet deployed) or an inventory gap? Clarify production timeline.
+        <strong>🟡 CONFIRMED (AWS scan 2026-02-22):</strong> No rcm-dsync resources exist in production account (975050223773).
+        <br><br>
+        <strong>Questions to resolve:</strong>
+        <ul style="margin-top: 0.5rem;">
+            <li>Is production deployment blocked on something?</li>
+            <li>What is the timeline for Salesforce → RDS migration in prod?</li>
+            <li>Is there a dependency on Gobodo or other systems?</li>
+        </ul>
+        <strong>Action:</strong> Clarify with Thomas/Anthony.
     </div>
     <div class="validation-note">
         <strong>🔍 VALIDATION — Section 10:</strong>
