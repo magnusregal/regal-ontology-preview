@@ -21,9 +21,67 @@
             background: var(--bg);
             color: var(--text);
             line-height: 1.6;
+        }
+        /* Navigation */
+        .nav-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 220px;
+            height: 100vh;
+            background: var(--surface);
+            padding: 1rem;
+            overflow-y: auto;
+            border-right: 2px solid var(--accent);
+            z-index: 100;
+        }
+        .nav-container h3 {
+            color: var(--blue);
+            font-size: 0.9rem;
+            margin: 1rem 0 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .nav-container h3:first-child { margin-top: 0; }
+        .nav-container a {
+            display: block;
+            color: var(--text);
+            text-decoration: none;
+            padding: 0.3rem 0.5rem;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .nav-container a:hover {
+            background: var(--accent);
+            color: var(--blue);
+        }
+        .nav-container .addendum {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--accent);
+        }
+        .nav-container .addendum a {
+            color: var(--green);
+            font-size: 0.8rem;
+        }
+        /* Main content */
+        .main-content {
+            margin-left: 240px;
             padding: 2rem;
-            max-width: 1000px;
-            margin: 0 auto;
+            max-width: 900px;
+        }
+        @media (max-width: 768px) {
+            .nav-container {
+                position: relative;
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 2px solid var(--accent);
+            }
+            .main-content {
+                margin-left: 0;
+            }
         }
         h1 { color: var(--blue); margin-bottom: 0.5rem; font-size: 2rem; }
         h2 { color: var(--green); margin: 2rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--accent); }
@@ -65,14 +123,51 @@
     </style>
 </head>
 <body>
+    <!-- Navigation Sidebar -->
+    <nav class="nav-container">
+        <h3>📑 Sections</h3>
+        <a href="#section-1">1. Purpose</a>
+        <a href="#section-2">2. Domain Boundaries</a>
+        <a href="#section-3">3. System Landscape</a>
+        <a href="#section-4">4. API Surface</a>
+        <a href="#section-5">5. Entity Model</a>
+        <a href="#section-6">6. Projections</a>
+        <a href="#section-7">7. Commands vs Events</a>
+        <a href="#section-8">8. Cross-Cutting</a>
+        <a href="#section-9">9. UK Expansion</a>
+        <a href="#section-10">10. Migration (SF→RDS)</a>
+        <a href="#section-11">11. Review Summary</a>
+        
+        <h3>🔗 Repositories</h3>
+        <a href="https://github.com/Regal-Credit-Management" target="_blank">Regal-Credit-Management</a>
+        <a href="https://github.com/gobodo" target="_blank">gobodo (external)</a>
+        
+        <div class="addendum">
+            <h3>📎 Addendum Docs</h3>
+            <a href="api-endpoints-detail.md" target="_blank">API Endpoints Detail</a>
+            <a href="aws-git-comparison.md" target="_blank">AWS ↔ Git Comparison</a>
+            <a href="verification-2026-02-22.md" target="_blank">AWS Verification Report</a>
+        </div>
+        
+        <div class="addendum">
+            <h3>⚠️ Quick Links</h3>
+            <a href="#gobodo-security" style="color: var(--yellow);">🚨 Gobodo Security Issue</a>
+            <a href="#prod-gap" style="color: var(--yellow);">⚠️ Production Gaps</a>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main class="main-content">
     <h1>Regal Ontology v2</h1>
     <div class="meta">
         <strong>Version:</strong> 2.0 | 
         <strong>Reviewed:</strong> 2026-02-22 | 
         <strong>Sources:</strong> Regal Ontology v1, AWS Architecture Inventory v2/v2.1, ontology-map.aws.yaml
+        <br><strong>Last Updated:</strong> <span id="lastUpdated"></span>
+        <script>document.getElementById('lastUpdated').textContent = new Date().toLocaleString();</script>
     </div>
 
-    <h2>1) Purpose</h2>
+    <h2 id="section-1">1) Purpose</h2>
     <p>The Regal Ontology defines the canonical model of Regal's business domain (clients, partners, services, workflows, and systems) in a way that can be:</p>
     <ul>
         <li><strong>queried</strong> — what is true right now?</li>
@@ -131,7 +226,7 @@
         </ul>
     </div>
 
-    <h2>2) Domain Boundaries (Bounded Contexts)</h2>
+    <h2 id="section-2">2) Domain Boundaries (Bounded Contexts)</h2>
     <p>Units of ownership that map cleanly to repos, AWS stacks, and team responsibility. Each context has clear boundaries and communicates with others through defined interfaces.</p>
 
     <table>
@@ -255,7 +350,7 @@
         </ul>
     </div>
 
-    <h2>3) System Landscape</h2>
+    <h2 id="section-3">3) System Landscape</h2>
     <p>Where truth lives and where actions occur. Systems are organized by function and include both US (current) and UK (planned) deployments.</p>
     
     <h3>3.1 Identity & Authorization</h3>
@@ -299,7 +394,7 @@
         </tr>
     </table>
 
-    <h3>3.3 Gobodo (Dynamic Data Platform)</h3>
+    <h3 id="gobodo-security">3.3 Gobodo (Dynamic Data Platform)</h3>
     <p><strong>Gobodo</strong> is Regal's custom dynamic data modeling platform that powers Product Hub. It enables:</p>
     <ul>
         <li>Custom object definitions (like Salesforce custom objects)</li>
@@ -307,6 +402,32 @@
         <li>Role-based field visibility and permissions</li>
         <li>Schema evolution without code deployments</li>
     </ul>
+    
+    <h4>Source Repositories (github.com/gobodo)</h4>
+    <table>
+        <tr><th>Repo</th><th>Language</th><th>Purpose</th><th>Updated</th></tr>
+        <tr>
+            <td><a href="https://github.com/gobodo/gobodo-core" target="_blank"><code>gobodo/gobodo-core</code></a></td>
+            <td>Java</td>
+            <td>Core Gobodo engine</td>
+            <td>7 minutes ago ✅</td>
+        </tr>
+        <tr>
+            <td><a href="https://github.com/gobodo/gobodo-api-js-promise" target="_blank"><code>gobodo/gobodo-api-js-promise</code></a></td>
+            <td>JavaScript</td>
+            <td>JS client (Promises)</td>
+            <td>2 days ago</td>
+        </tr>
+        <tr>
+            <td><code>gobodom/gobodom.github.io</code></td>
+            <td>—</td>
+            <td>Legacy docs site</td>
+            <td>Oct 2014</td>
+        </tr>
+    </table>
+    <p><em>Note: Gobodo repos are in a separate <code>gobodo</code> org, not <code>Regal-Credit-Management</code></em></p>
+    
+    <h4>AWS Infrastructure</h4>
     <p><em>✅ Verified via AWS scan 2026-02-22</em></p>
     <table>
         <tr><th>Component</th><th>Dev (865942198740)</th><th>Prod (975050223773)</th><th>Notes</th></tr>
@@ -458,9 +579,9 @@
         </tr>
         <tr>
             <td><strong>Gobodo</strong></td>
-            <td>CDK Pipelines</td>
-            <td class="flag">❓ Repo not found in org</td>
-            <td>Unknown</td>
+            <td>CDK Pipelines / Elastic Beanstalk</td>
+            <td><code>gobodo/gobodo-core</code> (Java)<br><code>gobodo/gobodo-api-js-promise</code></td>
+            <td>Active ✅ (separate org)</td>
         </tr>
         <tr>
             <td><strong>Salesforce Data Sync</strong></td>
@@ -508,7 +629,7 @@ rcm-serverless/
         </ul>
     </div>
 
-    <h2>4) API Surface</h2>
+    <h2 id="section-4">4) API Surface</h2>
     <p>All APIs are served via AWS API Gateway with Keycloak JWT authorization. Each route requires specific scopes (capabilities) for access.</p>
     
     <h3>4.1 API Gateways</h3>
@@ -709,7 +830,7 @@ rcm-serverless/
         </ul>
     </div>
 
-    <h2>5) Entity Model (Canonical)</h2>
+    <h2 id="section-5">5) Entity Model (Canonical)</h2>
     <p>Definitive entity definitions with field-level detail. Sources: Salesforce objects, RDS tables, Keycloak attributes, vendor APIs.</p>
     
     <h3>5.1 Identity & Access</h3>
@@ -1023,7 +1144,7 @@ rcm-serverless/
         </ul>
     </div>
 
-    <h2>6) Projections & Read Models</h2>
+    <h2 id="section-6">6) Projections & Read Models</h2>
     <p><em>Target architecture for read-optimized views (DynamoDB, materialized views)</em></p>
     <div class="review-note">
         <strong>🔴 REVIEW:</strong> Section is sparse. Define specific read models for: Client Dashboard views, Partner aggregations, Reporting/analytics, Agent decision-making.
@@ -1040,7 +1161,7 @@ rcm-serverless/
         </ul>
     </div>
 
-    <h2>7) Commands vs Events</h2>
+    <h2 id="section-7">7) Commands vs Events</h2>
     
     <h3>7.1 Commands (write intents)</h3>
     <p><em>TODO: Add this section</em></p>
@@ -1117,7 +1238,7 @@ rcm-serverless/
         </ul>
     </div>
 
-    <h2>10) Migration Snapshot (Salesforce → RDS)</h2>
+    <h2 id="section-10">10) Migration Snapshot (Salesforce → RDS)</h2>
     <p><em>✅ Verified via AWS scan + <code>salesforce-data-sync</code> repo analysis 2026-02-22</em></p>
     
     <h3>10.1 Sync Orchestrator Architecture</h3>
@@ -1195,7 +1316,7 @@ Error Path: Handle*Failure → FailWorkflow → NotifyFailure → SyncFailed
         <li><code>migrations</code> — 67 migration files tracked</li>
     </ul>
     <div class="review-note security-warning">
-        <strong>🟡 CONFIRMED (AWS scan 2026-02-22):</strong> No rcm-dsync resources exist in production account (975050223773).
+        <span id="prod-gap"></span><strong>🟡 CONFIRMED (AWS scan 2026-02-22):</strong> No rcm-dsync resources exist in production account (975050223773).
         <br><br>
         <strong>Questions to resolve:</strong>
         <ul style="margin-top: 0.5rem;">
@@ -1258,5 +1379,6 @@ Error Path: Handle*Failure → FailWorkflow → NotifyFailure → SyncFailed
         <tr><td>11) Output Formats</td><td class="priority-high">HIGH</td><td>Create machine-readable schemas</td></tr>
     </table>
 
+</main>
 </body>
 </html>
